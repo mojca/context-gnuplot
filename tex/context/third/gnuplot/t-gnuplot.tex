@@ -186,7 +186,7 @@
 %D \stopGNUPLOTscript
 %D \stoptyping
 \long\def\startGNUPLOTinclusions
-  {\def\stopGNUPLOTinclusions{\ifx\savebuffer\undefined \else \savebuffer[gnuplot-inclusions]\fi}
+  {\def\stopGNUPLOTinclusions{\ifx\savebuffer\undefined \else \savebuffer[gnuplot-inclusions]\fi}%
    \dostartbuffer[gnuplot-inclusions][startGNUPLOTinclusions][stopGNUPLOTinclusions]}
 
 % \def\resetGNUPLOTinclusions{\let\GNUPLOTinclusions\empty}
@@ -261,7 +261,7 @@
   {\doglobal\increment\GNUPLOTnumber
    \letgvalue{gps:n:#1}\GNUPLOTnumber
    % in case of LuaTeX we need to write the buffer into file explicitely
-   \def\stopGNUPLOTscript{\egroup \ifx\savebuffer\undefined \else \savebuffer[gnuplot-\GNUPLOTnumber]\fi}
+   \def\stopGNUPLOTscript{\egroup \ifx\savebuffer\undefined \else \savebuffer[gnuplot-\GNUPLOTnumber]\fi}%
    \dostartbuffer[gnuplot-\GNUPLOTnumber][startGNUPLOTscript][stopGNUPLOTscript]
    }
 
@@ -402,7 +402,7 @@
 	{\doifdefined{gps:n:#1}{\doifGNUPLOTscriptnotprocessed{#1}{%
 		% \gpe:{name}:{terminal} is defined
 		%\setgvalue{gpe:#1:\@@GNUPLOTterminal}{#2}
-		\letGNUPLOTscriptprocessed{#1}
+		\letGNUPLOTscriptprocessed{#1}%
 		% call to gnuplot and processing/converting the graphics is only needed in the first ConTeXt run
 		\doifmode{*\v!first}{% (perhaps also: if files haven't changed)
 			\bgroup
@@ -438,7 +438,7 @@
 			% \executesystemcommand{texmfstart --ifchanged=\GNUPLOTfile.plt\space
 			% 	--direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
 			\executesystemcommand{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
-			\writestatus{aaa}{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}
+			\writestatus{aaa}{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
 			\convertGNUPLOTgraphic
 		}%
 		% for ConTeXt terminal only - read the result
