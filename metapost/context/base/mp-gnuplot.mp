@@ -46,7 +46,8 @@ boolean context_gplot ; context_gplot := true;
 	gp_color_lt[-4] = gp_color_background;
 	gp_color_lt[-3] = gp_color_background; % TODO: nodraw!!!
 	gp_color_lt[-2] = gp_color_foreground;
-	gp_color_lt[-1] = gp_color_foreground;
+	% TODO: do we need this to be configurable?
+	gp_color_lt[-1] = gp_color_foreground; % coordinate axes
 	gp_color_lt[0] = red;
 	gp_color_lt[1] = green;
 	gp_color_lt[2] = blue;
@@ -75,7 +76,8 @@ boolean context_gplot ; context_gplot := true;
 	picture gp_dash_lt[];
 	gp_dash_lt[-3] := dashpattern(off 1) scaled (gp_scale_dashlength*gp_dashlength); % TODO: test!!!
 	gp_dash_lt[-2] := dashpattern(on 1) scaled (gp_scale_dashlength*gp_dashlength);
-	gp_dash_lt[-1] := dashpattern(on 1) scaled (gp_scale_dashlength*gp_dashlength);
+	% for axes
+	gp_dash_lt[-1] := dashpattern(on 2 off 1) scaled (gp_scale_dashlength*gp_dashlength);
 	gp_dash_lt[0]  := dashpattern(on 1) scaled (gp_scale_dashlength*gp_dashlength);
 	gp_dash_lt[1]  := dashpattern(on 4 off 2) scaled (gp_scale_dashlength*gp_dashlength);
 	gp_dash_lt[2]  := dashpattern(on 2 off 3) scaled (gp_scale_dashlength*gp_dashlength);
@@ -460,7 +462,12 @@ boolean context_gplot ; context_gplot := true;
 
 	def gp_draw(expr p) =
 		draw (p) withcolor gp_color_current withpen pencircle scaled gp_linewidth
-			if gp_use_dashed: dashed gp_dash_linetype(gp_linetype) fi;
+			% axes should be drawn with only one half of the default linewidth
+			% TODO: do we need this to be configurable?
+			if gp_linetype = -1: scaled .5 fi
+			if gp_use_dashed: dashed gp_dash_linetype(gp_linetype)
+			% TODO: make this definition nicer (combine with the definition above)
+			elseif gp_linetype = -1: dashed gp_dash_linetype(gp_linetype) fi;
 	enddef;
 
 	def gp_dot(expr x,y) =

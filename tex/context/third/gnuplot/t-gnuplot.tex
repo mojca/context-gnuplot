@@ -51,6 +51,19 @@
 	gp_color_lt[-2] := gp_color_foreground;
 \stopMPextensions
 
+% (hopefully) temporary solution for handling the color in
+% \sometxt{...} withcolor red
+\chardef\TeXtextcolormode\zerocount
+% we need a \strut in front of labels for better vertical centering
+%
+% Aditya, thanks a lot for requesting it!
+% Hans, thanks a lot for implementing this!
+\definetextext[gp]{\strut}
+% TODO:
+%    \sometxt[gp][ss,20pt]{abc}
+% should become equivalent to
+%    \sometxt{\switchtobodyfont[ss,20pt]\strut abc}
+
 %D For the old method of put_text("some text") using textext:
 %D not used/supported any more, but still here for testing purposes
 %D (to be removed in the future)
@@ -379,52 +392,7 @@
 % TODO: testset is here only temporary & for testing
 \setupGNUPLOT[\c!terminal=context,\c!options=,\c!pointset=gnuplot:pointset]
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% Ugly code: copied and adapted from meta-txt; has to be changed !!!
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% \gptext is same as \sometxt, but adds a \strut in front
-\long\def\dodofiltergptext#1#2#3%
-  {\ifx#2\empty
-   \else
-     \increment\txtcounter
-     \TeXtext\txtcounter{\strut{}#1}%
-     \expandafter\filtergptext
-   \fi#2#3}
-
-\long\def\redofiltergptext[#1]#2%
-  {\increment\txtcounter
-   \TeXtext[#1]\txtcounter{\switchtobodyfont[#1]\strut{}#2}%
-   \filtergptext}
-
-\long\def\filtergptext#1\gptext
-  {\doifnextcharelse[\redofiltergptext\dodofiltergptext}
-
-% EXTREMELY UGLY: it's a redefinition of an existing macro (that doesn't even work properly when sometxt and gptext are mixed with each other - counters are not increased properly)
-\long\def\flushTeXtexts#1%
-  {\newcounter\txtcounter
-   \dostartTeXtexts
-     \the\collectedmptexts
-     % this line has been added
-     \filtergptext#1\gptext{}\empty\relax
-     \filtersometxt#1\sometxt{}\empty\relax
-   \dostopTeXtexts
-   \ifconditional\TeXtextdone
-     \immediate\write\MPwrite{loadtxts ; txtnext := 0 ;}%
-     \global\collectedmptexts\emptytoks
-   \fi
-   \newcounter\txtcounter}
-
-\long\def\gptext #1#{\dogptext} % grab optional [args]
-\long\def\dogptext#1{sometxt(nexttxt)}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \protect \doifnotmode{demo}{\endinput}
-
-
 
 
 \starttext
