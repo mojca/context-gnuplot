@@ -1,7 +1,7 @@
 
-if known context_gplot : endinput; fi;
+if known context_gnuplot : endinput; fi;
 
-boolean context_gplot ; context_gplot := true;
+boolean context_gnuplot ; context_gnuplot := true;
 
 	string gnuplotversion;
 

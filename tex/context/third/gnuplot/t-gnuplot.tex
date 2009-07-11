@@ -14,6 +14,12 @@
 %D This module is used for creating gnuplot graphs on-the-fly and including them
 %D into documents.
 %D
+%D Known Bugs:
+%D
+%D \startitemize
+%D \item spurious space \& page
+%D \stopitemize
+%D 
 %D TODO (Optimisations):
 %D
 %D \startitemize
@@ -48,8 +54,8 @@
 %D so unvisible to \type{MPcode}
 %D (probably something like \type+\appendtoks ... to\everyGNUPLOTgraphic+)
 \startMPextensions
-	% load metapost macros only once
-	if unknown context_gplot: input mp-gnuplot.mp ; fi;
+	% load metapost macros (only once)
+	input mp-gnuplot.mp ;
 	% number of points defined with \setupGNUPLOTterminal[pointset=...]
 	%gp_num_points_with_tex := \gp:num:pointswithtex;
 	gp_num_points_with_tex := 3;
@@ -66,6 +72,8 @@
 %	gp_scale_dashlength := \gp:term:context:dashlength;
 	% linewidth scale
 	gp_scale_linewidth := \@@GNUPLOT@term@context@linewidth;
+	
+	gp_scale_text := \@@GNUPLOT@term@context@textscale;
 
 	% linejoin := \gp:term:context:linejoin;
 	% linecap  := \gp:term:context:linecap;
@@ -149,7 +157,7 @@
 \newcounter\GNUPLOTnumber
 
 %D \macros
-%D   {startGNUPLOTinclusions}
+%D   {startGNUPLOTinclusions, resetGNUPLOTinclusions}
 %D
 %D For those who want to have two or more graphs with similar options,
 %D these options may be included inside \type{\startMPinclusions ... \stopMPinclusions}
@@ -177,13 +185,16 @@
   {\bgroup
    \obeylines
    \catcode`\%=\@@letter
+   \catcode`\|=\@@letter
    \dostartGNUPLOTinclusions}
 
 \long\def\dostartGNUPLOTinclusions#1\stopGNUPLOTinclusions
   {\gdef\GNUPLOTinclusions{#1}%
    \egroup}
 
-\let\GNUPLOTinclusions\empty
+\def\resetGNUPLOTinclusions{\let\GNUPLOTinclusions\empty}
+
+\resetGNUPLOTinclusions
 
 %D On the other hand, one can probably achieve the same effect
 %D when drawing two plots inside the same script, like that:
@@ -221,6 +232,8 @@
 \def\redostartGNUPLOTscript#1
   {\obeylines
    \catcode`\%=\@@letter
+   \catcode`\|=\@@letter
+   \catcode`\$=\@@letter
    \dodostartGNUPLOTscript{#1}%
 %\dostartGNUPLOTscript[#2]
 }
@@ -229,6 +242,8 @@
   {\iffirstargument
      \obeylines
      \catcode`\%=\@@letter
+     \catcode`\|=\@@letter
+     \catcode`\$=\@@letter
      \dodostartGNUPLOTscript{#1}%
    \else
      \redostartGNUPLOTscript
@@ -268,7 +283,7 @@
 
 \appendtoks
     \obeylines
-    \def\obeyedline{\outputnewlinechar}
+    \def\obeyedline{\outputnewlinechar}%
 \to \everyGNUPLOTscript
 
 %D Content of GNUPLOTscript has to be handled literally:
@@ -277,6 +292,7 @@
 \appendtoks
     \let\%\letterpercent
     \def\ {\letterbackslash\outputnewlinechar}%
+    \catcode`\$=\@@letter
 \to \everyGNUPLOTscript
 
 % When are the graphics processed/read?
@@ -315,10 +331,10 @@
 \def\douseGNUPLOTgraphic[#1][#2][#3]%
 	{\doifelse{#3}{}{%
 		% < 3 arguments
-		\doifelse{#2}{}
+		\doifelse{#2}{}%
 			% 1 argument
 			% as in \useGNUPLOTgraphic[name]
-			{\dodouseGNUPLOTgraphic[#1][][]}
+			{\dodouseGNUPLOTgraphic[#1][][]}%
 			% % as in \useGNUPLOTgraphic{name}
 			% {\redouseGNUPLOTgraphic[][][]}%
 			% 2 arguments
@@ -425,6 +441,8 @@
 			% open file for writing
 			\immediate\openout\scratchwrite=\GNUPLOTfile.plt
 			% TODO: terminal-specific options (default or provided by the user)
+			\immediate\write\scratchwrite{\letterhash\space Do not modify this file - all changes will be overwritten}%
+			\immediate\write\scratchwrite{\letterhash\space Change \jobname.tex instead.}%
 			\immediate\write\scratchwrite{set terminal \@@GNUPLOToutput\space\@@GNUPLOToptions}%
 			% add common inclusions in scripts for multiple similar plots
 			\doifnotempty
@@ -443,7 +461,8 @@
 			%     or some other error in script which results in empty output file
 			%
 			% run gnuplot & execute the script that has just been written
-			\executesystemcommand{gnuplot \GNUPLOTfile.plt}%
+			\executesystemcommand{texmfstart --ifchanged=\GNUPLOTfile.plt\space
+				--direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
 			\convertGNUPLOTgraphic
 		}%
 		% for ConTeXt terminal only - read the result
@@ -454,27 +473,27 @@
 \def\dodouseGNUPLOTgraphic[#1][#2][#3]%
 	{\bgroup
 	\doifdefined{gps:n:#1}
-		{\edef\GNUPLOTnumber{\getvalue{gps:n:#1}}
-		 \edef\GNUPLOTfile  {\bufferprefix gnuplot-\GNUPLOTnumber}
-		\writeandprocessGNUPLOTscript{#1}
+		{\edef\GNUPLOTnumber{\getvalue{gps:n:#1}}%
+		 \edef\GNUPLOTfile  {\bufferprefix gnuplot-\GNUPLOTnumber}%
+		\writeandprocessGNUPLOTscript{#1}%
 		% "ctxtools --purge" should delete the gnuplot script and other intermediate files
 		% (but it seems that they are deleted automatically already; preferred or not?)
 %		\registertempfile{\GNUPLOTfile.plt}
 %		\registertempfile{\@@GNUPLOTresult}
 %		\registertempfile{\@@GNUPLOTfinalresult}
-		\doifelse{\@@GNUPLOTterminal}{context}
+		\doifelse{\@@GNUPLOTterminal}{context}%
 		% for ConTeXt terminal only
 		{\doifelse{#2}{}%
 			% if no explicit figure number was specified, include all the figures
 			{\doloop
-				{\doifMPgraphicelse{gpg:#1:\recurselevel}
-				{\scale[#3]{\reuseMPgraphic{gpg:#1:\recurselevel}}}
-				{\exitloop}}}
+				{\doifMPgraphicelse{gpg:#1:\recurselevel}%
+				{\scale[#3]{\reuseMPgraphic{gpg:#1:\recurselevel}}}%
+				{\exitloop}}}%
 			% if numbers were specified, include the figures specified in the list only
 			{\begingroup
 				\def\useGNUPLOTgraphicN##1{\doifMPgraphicelse
-					{gpg:#1:##1}
-					{\scale[#3]{\reuseMPgraphic{gpg:#1:##1}}}
+					{gpg:#1:##1}%
+					{\scale[#3]{\reuseMPgraphic{gpg:#1:##1}}}%
 					% if graphic doesn't exist: draw a dummy frame instead and warn the user
 					{\scale[#3]{\framed[frame=on,width=5in,height=3in,align={middle,lohi}]{GNUPLOT graphic #1, Nr. ##1 doesn't exist}}}}%
 				\processcommalist[#2]\useGNUPLOTgraphicN
@@ -483,14 +502,14 @@
 		}%
 		% for all the other terminals
 		% TODO: add more safety switches (if pages don't exist for example)
-		{\doifelse{#2}{}
+		{\doifelse{#2}{}%
 			% if no explicite figure number was specified, include all the pages
 			% TODO: properly handle METAPOST & PNG (only works for (E)PS & PDF) !!!
 			{\getfiguredimensions[\@@GNUPLOTresult]%
-				\dorecurse{\noffigurepages}{\externalfigure[\@@GNUPLOTfinalresult][page=\recurselevel,#3]}}
+				\dorecurse{\noffigurepages}{\externalfigure[\@@GNUPLOTfinalresult][page=\recurselevel,#3]}}%
 			% if numbers were specified, include the pages specified in the list only
 			{\begingroup
-				\def\useGNUPLOTgraphicN##1{\externalfigure[\@@GNUPLOTfinalresult][page=##1,#3]}
+				\def\useGNUPLOTgraphicN##1{\externalfigure[\@@GNUPLOTfinalresult][page=##1,#3]}%
 				\processcommalist[#2]\useGNUPLOTgraphicN
 				\endgroup
 			}%
@@ -512,12 +531,12 @@
    % XXX: no idea why this is needed, but otherwise it complains that @@GNUPLOTpointset is undefined
    \edef\currentGNUPLOTpointset{\@@GNUPLOTpointset}%
    \startTeXtexts
-    \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}
+    \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}%
        % +500 is a hack (hopefully the plot doesn't contain more than 500 labels)
        % otherwise the points would be overwritten by labels with another \TeXtext:
        % it might need a fix in ConTeXt core
-       {\TeXtext{\numexpr\recurselevel+500\relax}{{\convertnumber{\currentGNUPLOTpointset}{\recurselevel}}}}
-       {\exitloop}}
+       {\TeXtext{\numexpr\recurselevel+500\relax}{{\convertnumber{\currentGNUPLOTpointset}{\recurselevel}}}}%
+       {\exitloop}}%
    \stopTeXtexts
    % \gp:num:pointswithtex is passed to metapost, so that it knows
    % how many points are defined and chooses the proper point
@@ -526,9 +545,9 @@
    % for safety reasons define \gp:num:pointswithtex to be equal to 1 (it can only increase later), otherwise:
    % - (something mod 0) won't work
    % - if conversion is not defined, the number will retain its old value (not desirable)
-   \edef\gp:num:pointswithtex{1}
-   \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}
-       {\edef\gp:num:pointswithtex{\recurselevel}}
+   \edef\gp:num:pointswithtex{1}%
+   \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}%
+       {\edef\gp:num:pointswithtex{\recurselevel}}%
        {\exitloop}}%
    % TODO:
    % - issue a warning if user wants to use points with TeX,
@@ -587,9 +606,9 @@
    \def\startGNUPLOTgraphic
       {\obeyMPlines % <- no longer a problem
        \def\obeyedline{}% <- thanks to this
-       \dosingleargument\dostartGNUPLOTgraphic}
+       \dosingleargument\dostartGNUPLOTgraphic}%
    \long\def\dostartGNUPLOTgraphic[##1]##2\stopGNUPLOTgraphic
-      {\startreusableMPgraphic{gpg:#1:##1}##2\stopreusableMPgraphic}
+      {\startreusableMPgraphic{gpg:#1:##1}##2\stopreusableMPgraphic}%
    %
    % if gps:n:{name} (which is a number) is not defined,
    % then we first have to increase the \GNUPLOTnumber counter and associate this name with the new number
@@ -599,7 +618,7 @@
 %   \doifdefined{gps:n:#1}
    % input the file
    % TODO: error / warning if the files doesn't exist
-   \readlocfile{#2}{}{} % the third argument should be: if file not found
+   \readlocfile{#2}{}{}% the third argument should be: if file not found
    % this file is known
    % TODO \letgvalue{gpf:#1}\plusone
   }
@@ -659,19 +678,19 @@
 	{png}{png}{png}{}
 	{\GNUPLOTfile-png.png}{\GNUPLOTfile-png.png}
 \defineGNUPLOThandle
-	{context}{context}{tex}{}
+	{context}{context textscale \@@GNUPLOT@term@context@textscale}{tex}{}
 	{\GNUPLOTfile-ctx.tex}{\GNUPLOTfile-ctx.tex}
-
+% \doifnotempty{\@@GNUPLOT@term@context@textscale}{textscale \@@GNUPLOT@term@context@textscale}
 
 \def\defineGNUPLOTterminal
 	{\dodoubleargument\dodefineGNUPLOTterminal}
 
 \def\dodefineGNUPLOTterminal[#1][#2]%
-	{\doifassignmentelse{#2}
+	{\doifassignmentelse{#2}%
 	 	% define a proper terminal
-	 	{} % TODO
+	 	{}% TODO
 	 	% only define a synonym for that terminal
-	 	{} % TODO
+	 	{}% TODO
 	}
 
 %D {\sl terminal}: argument to be passed to gnuplot in the form of "set term {\sl terminal}"
@@ -795,7 +814,7 @@
 	[context]
 	[width=default,    % *default* (5in) | <dimension>
 	 height=default,   % *default* (3in) | <dimension>
-	 linejoin=mitered, % *mitered* | rounded | beveled
+	 linejoin=rounded, % mitered | *rounded* | beveled
 	 linecap=butt,     % *butt* | rounded (in gnuplot: round) | squared
 	 dashed=yes,       % *yes* | no
 	 dashlength=1,     % scaling factor for dash lengths
@@ -838,7 +857,7 @@
 %	[red,green,blue,magenta,cyan,yellow,black,orange,gray50]
 
 % TODO: testset is here only temporary & for testing
-\setupGNUPLOT[\c!terminal=context,\c!options=,\c!pointset=gnuplot:pointset] % colors=postscript
+\setupGNUPLOT[program=gnuplot,\c!terminal=context,\c!options=,\c!pointset=gnuplot:pointset] % colors=postscript
 
 %D Some additional typescripts which enable us using font "Arial" and "Helvetica"
 
@@ -853,13 +872,14 @@
   \definefontsynonym [SerifCaps]        [Helvetica]
 \stoptypescript
 
-\starttypescript [gnuplot] [texnansi,ec,uc]
+\starttypescript [gnuplot] [texnansi,ec]
   \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
   \definetypeface [Helvetica] [ss] [sans]  [helvetica] [default] [encoding=\typescripttwo]
   \definetypeface [Arial] [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
   \definetypeface [Arial] [ss] [sans]  [helvetica] [default] [encoding=\typescripttwo]
 \stoptypescript
 
+% TODO: fix for XeTeX
 \usetypescript[gnuplot][ec]
 
 \stopmodule
@@ -869,7 +889,7 @@
 
 \starttext
 
-\startGNUPLOTscript{exp}
+\startGNUPLOTscript[exp]
 set key bottom
 set format x "%.1f"
 set format y "%.1f"
@@ -884,16 +904,16 @@ plot [0:3] 2/sqrt(pi)*exp(-x**2) t '$\frac{2}{\sqrt{\pi}}e^{-x^2}$' with filledc
     set title "trigonometry"
 \stopGNUPLOTinclusions
 
-\startGNUPLOTscript{sin}
+\startGNUPLOTscript[sin]
     plot sin(x)
 \stopGNUPLOTscript
 
-\startGNUPLOTscript{cos}
+\startGNUPLOTscript[cos]
     plot cos(x)
 \stopGNUPLOTscript
 
-\useGNUPLOTgraphic{sin} \endgraf
-\useGNUPLOTgraphic{cos} \endgraf
+\useGNUPLOTgraphic[sin] \endgraf
+\useGNUPLOTgraphic[cos] \endgraf
 \useGNUPLOTgraphic[cos] \endgraf
 
 \setupGNUPLOT[terminal=ps]  \useGNUPLOTgraphic[sin][object=no,height=2cm] \blank
