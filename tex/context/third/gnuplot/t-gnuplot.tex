@@ -262,7 +262,7 @@
    \letgvalue{gps:n:#1}\GNUPLOTnumber
    % in case of LuaTeX we need to write the buffer into file explicitely
    \def\stopGNUPLOTscript{\egroup \ifx\savebuffer\undefined \else \savebuffer[gnuplot-\GNUPLOTnumber]\fi}%
-   \dostartbuffer[gnuplot-\GNUPLOTnumber][startGNUPLOTscript][stopGNUPLOTscript]
+   \dostartbuffer[gnuplot-\GNUPLOTnumber][startGNUPLOTscript][stopGNUPLOTscript]%
    }
 
 % When are the graphics processed/read?
@@ -616,7 +616,7 @@
 \def\startGNUPLOTpage
 	{\obeyMPlines\dostartGNUPLOTpage}
 
-\long\def\dostartGNUPLOTpage#1\stopGNUPLOTpage
+\long\def\dostartGNUPLOTpage#1\stopGNUPLOTpage%
 	{\startMPpage#1\stopMPpage}
 
 
