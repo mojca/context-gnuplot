@@ -137,22 +137,38 @@ boolean context_gplot ; context_gplot := true;
 %		fi;
 	enddef;
 
-	% sets the color so that it matches the color of linetype
-	def gp_set_color_lt(expr linetype) =
-		gp_color_current := gp_color_linetype(linetype);
-	enddef;
+	% gp_set_color(lt(3))
+	% gp_set_color(rgb(.5,.5.0))
+	% gp_set_color(frac(.3))
+	def gp_set_color(text t) =
+		begingroup;
+		% sets the color to the given (r,g,b) triple
+		def rgb(expr r,g,b) =
+			gp_color_current := (r,g,b);
+		enddef;
+		
+		% sets the color so that it matches the color of linetype
+		def lt(expr linetype) =
+			gp_color_current := gp_color_linetype(linetype);
+		enddef;
 
-	% sets the color so that it matches the color of linetype
-	def gp_set_color_rgb(expr col) =
-		gp_color_current := col;
-	enddef;
+		% sets the color either to gray or according to the current palette
+		def frac(expr fraction) =
+			% "if palette = gray"
+			if gp_palette_color_mode = gp_palette_color_mode_rgb:
+				gp_color_current := (
+					gp_palette_function(gp_palette_formula_r,fraction),
+					gp_palette_function(gp_palette_formula_g,fraction),
+					gp_palette_function(gp_palette_formula_b,fraction));
+			else:
+				% TODO - more advanced paletter
+				gp_color_current := fraction*white; % XXX: should this be (1-frac)*white perhaps?
+			fi;
+		enddef;
 
-	% sets the color either to gray or according to the palette
-	def gp_set_color_frac(expr frac) =
-		% TODO
-		% "if palette = gray"
-		gp_color_current := frac*white; % XXX: should this be (1-frac)*white perhaps?
-		% else
+		% execute the content - calls one of the definitions from above
+		t;
+		endgroup;
 	enddef;
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -182,10 +198,20 @@ boolean context_gplot ; context_gplot := true;
 	gp_palette_color_mode_functions := 3; % user-defined transforms
 	gp_palette_color_mode_gradient  := 4; % interpolated table: explicitely defined or read from file
 
+	% there is no palette initialized by default
+	numeric gp_palette_color_mode;
+	gp_palette_color_mode := gp_palette_color_mode_none;
+
 	% mapping formulae for gp_palette_color_mode_rgb
-	numeric gp_palette_formula_r;
-	numeric gp_palette_formula_g;
-	numeric gp_palette_formula_b;
+	numeric gp_palette_formula_r; gp_palette_formula_r := 3; % f(x)=x
+	numeric gp_palette_formula_g; gp_palette_formula_g := 3;
+	numeric gp_palette_formula_b; gp_palette_formula_b := 3;
+
+	% explicitely defined color gradient
+	color gp_palette_gradient_colors[];
+	numeric gp_palette_gradient_pos[];
+	% number of defined colors
+	numeric gp_palette_gradient_n;
 
 	% gamma for gray scale palettes only
 	numeric gp_palette_gamma;
@@ -209,6 +235,156 @@ boolean context_gplot ; context_gplot := true;
 	
 	% gamma (only used for gray scale palettes)
 %	numeric gp_palette.gamma; gp_palette.gamma = 1;
+
+	def gp_make_palette(text t) =
+		begingroup;
+		% let hack: save comma
+%		let@=,;
+		
+		def color_mode(text mode) =
+			% let hack
+%			let,=@; let@=,;
+			save gray, rgb, functions, gradient;
+			gray      = gp_palette_color_mode_gray;
+			rgb       = gp_palette_color_mode_rgb;
+			functions = gp_palette_color_mode_functions;
+			gradient  = gp_palette_color_mode_gradient;
+		
+			gp_palette_color_mode := mode;
+		
+			% if mode=gray:
+			% 	% TODO
+			% elseif mode=rgb:
+			% 	% TODO
+			% elseif mode=functions:
+			% 	% TODO
+			% elseif mode=gradient:
+			% 	% TODO
+			% fi;
+		
+			% let hack: ignore next comma
+%			let,=;;
+		enddef;
+		
+		% for gp_palette_color_mode_rgb: numbers of formulae
+		def formulae(expr r, g, b) =
+			% let hack
+%			let,=@; let@=,;
+			gp_palette_color_mode := gp_palette_color_mode_rgb;
+			gp_palette_formula_r := r;
+			gp_palette_formula_g := g;
+			gp_palette_formula_b := b;
+			% let hack: ignore next comma
+%			let,=;;
+		enddef;
+		
+		% TODO: for gradient definitions
+		def colors(text tc) =
+			gp_palette_gradient_n := 0;
+			for i=tc:
+				gp_palette_gradient_colors[gp_palette_gradient_n] := i;
+				counter := counter+1;
+			endfor;
+			% let hack
+%			let,=@; let@=,;
+			% code goes here
+			% [TODO]
+			%
+			% let hack: ignore the following comma
+%			let,=;;
+		enddef;
+		
+		% TODO: for gradient definitions
+		def positions(text tp) =
+			gp_palette_gradient_n := 0;
+			for i=tp:
+				gp_palette_gradient_pos[gp_palette_gradient_n] := i;
+				counter := counter+1;
+			endfor;
+			% let hack
+%			let,=@; let@=,;
+			% code goes here
+			% [TODO]
+			%
+			% let hack: ignore the following comma
+%			let,=;;
+		enddef;
+		
+		t;
+		% let hack: restore comma
+%		let,=@;
+		endgroup;
+	enddef;
+
+	% Functions copied from GetColorValueFromFormula from getcolor.c
+	vardef gp_palette_function(expr ff, tt) =
+		save f, t;
+		f = ff;
+		t = tt;
+		% the input gray is supposed to be in interval [0,1]
+		% for a negative formula, reverse the palette (negate x)
+		if f < 0:
+			t := -t;
+			f := -f;
+		fi;
+		
+		t :=
+		if     f =  0: 0
+		elseif f =  1: 0.5
+		elseif f =  2: 1
+		elseif f =  3: t
+		elseif f =  4: t*t
+		elseif f =  5: t*t*t
+		elseif f =  6: t*t*t*t
+		elseif f =  7: sqrt(t)
+		elseif f =  8: sqrt(sqrt(t))
+		elseif f =  9: sind(90t)
+		elseif f = 10: cosd(90t)
+		elseif f = 11: abs(t-0.5)
+		elseif f = 12: (2t-1)*(2t-1)
+		elseif f = 13: sind(180t)
+		elseif f = 14: abs(cosd(180t))
+		elseif f = 15: sind(360t)
+		elseif f = 16: cosd(360t)
+		elseif f = 17: abs(sind(360t))
+		elseif f = 18: abs(cosd(360t))
+		elseif f = 19: abs(sind(720t))
+		elseif f = 20: abs(cosd(720t))
+		elseif f = 21: 3t
+		elseif f = 22: 3t-1
+		elseif f = 23: 3t-2
+		elseif f = 24: abs(3t-1)
+		elseif f = 25: abs(3t-2)
+		elseif f = 26: 1.5t-0.5
+		elseif f = 27: 1.5t-1.0
+		elseif f = 28: abs(1.5t-0.5)
+		elseif f = 29: abs(1.5t-1.0)
+		elseif f = 30: if     t <= 0.25: 0
+		               elseif t <= 0.57: t/0.32-0.78125
+		               else            : 1
+		               fi
+		elseif f = 31: if     t <= 0.42: 0
+		               elseif t <= 0.92: 2t-0.84
+		               else            : 1
+		               fi
+		elseif f = 32: if     t <= 0.42:  4t
+		               elseif t <= 0.92: -2t+1.84
+		               else            :   t/0.08-11.5
+		               fi
+		elseif f = 33: abs(2t-0.5)
+		elseif f = 34: 2t
+		elseif f = 35: 2t-0.5
+		elseif f = 36: 2t-1.0
+		else         : t % ERROR
+		fi;
+		
+		if     t < 0: 0
+		elseif t < 1: t
+		else        : 1
+		fi
+		
+		% TODO: add a note to getcolor.c
+	enddef;
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%%
@@ -251,94 +427,124 @@ boolean context_gplot ; context_gplot := true;
 	%%
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
+	% support for textext("...") has been dropped for two reasons:
+	% - I don't intend to support it any more
+	% - Extremely inefficient anyway (almost useless for gnuplot-generated graphics)
+	
 	% scalig factor for text labels (relative to the document font)
-	% if you set the font to 10pt and use scaligg factor 0.7,
-	% you'll get 7pt, not 10pt
+	% if you set the font to 10pt and use scaling factor 0.7,
+	% you'll get 7pt, not 10pt (but using the scaled 10pt design size ;)
 	numeric gp_scale_text; gp_scale_text := 1;
-
-	% metapost offers the following operators:
-	% - numeric defaultscale (1.0 stands for 10 or 12pt?) and can be changed
-	% - string  defaultfont
-	% - fontsize <defaultfont> (possible to write defaultfont or some other string)
-	% however, these are probably too much system-dependent;
-	% we use \switchtobodyfont[...] instead
 	
-	% this will be used for \switchtobodyfont[...] if non-empty
-	% it may be anything valid that goes to \switchtobodyfont[...],
-	% but from gnuplot it comes in the form
-	%     "fontname,fontsize[,optional rm|ss|tt|...]"
-	% examples:
-	%     "antykwa,17pt" % Antykwa Torunska, 17pt
-	%     "modern,,ss"   % [latin] modern sans
-	%     ",10dd"        % default font (probably latin modern), 10 didot points
-	% the purpose of that is that we want to know the size of fonts in order
-	% to be able to adjust default char heights and widths
+	% Returns the (image of) text: vertically centered and horizontally aligned
+	% according to the parameter align, which can be one of:
+	% - gp_align_center
+	% - gp_align_left
+	% - gp_align_right
 	%
-	% It's possible to set the default font size in the preamble,
-	% but then gnuplot doesn't know anything about the heights and widths
-	% of characters
-	string gp_font_current; gp_font_current = "";
-	
-	def gp_set_font(expr font) =
-		% we could do some testing for errors, but well ... no real motivation
-		gp_font_current := font;
-	enddef;
-	
-	% returns an empty string if font should be the default one and
-	% "\switchtobodyfont[currentfont,currentsize,possiblyothesettings:ss|tt|...]"
-	% otherwise
-	%
-	% to be appended in front of any labels
-	vardef gp_font_switch =
-		if gp_font_current = "" :
-			""
-		else :
-			"\switchtobodyfont["& gp_font_current & "]"
-		fi
-	enddef;
-	
-	% returns the aligned text according to the parameter align
-	% (left, right or middle), but really, not switched as in ConTeX "
-	% vertical alignment should be centered
-	%
-	% str may be a string or a picture
-	% if it's a string, produce a picture with textext(str) first
-	%
-	vardef gp_the_text(expr align, str) =
-		save pict, pict_strut; picture pict, pict_strut;
-
-		% using "textext"
-		if string str :
-			% vertical alignment (center of strut in current font size)
-			pict_strut := textext(gp_font_switch & "\strut");
-			pict := textext(gp_font_switch & str) shifted - center pict_strut;
-		% using \sometxt{}
-		% TODO: alignment
-		elseif picture str :
-			pict := str shifted -center(str);
-		% XXX: should be error report
-		else :
-			pict := nullpicture;
-		fi;
+	% The code used to support string as input parameter (for textext("...")),
+	% but this only complicated the thing and is of no real use any more.
+	vardef gp_the_text(expr align, pict) =
+		save shift_x, shift_y;
 		
-		% horizontal alignment
-		if align = gp_align_center :
-			pict := pict shifted (xpart(.5[llcorner pict,lrcorner pict]),0);
-		elseif align = gp_align_left :
-			pict := pict shifted (- xpart(llcorner pict),0);
-		elseif align = gp_align_right :
-			pict := pict shifted (- xpart(lrcorner pict),0);
-		fi;
-		% Hans wanted to persuade me to make the code shorter
-		% (zero is replicated three times), but I prefer clarity against sparing
-		% two bytes
+		shift_y = -ypart center pict;
+		shift_x = -xpart
+			% horizontal alignment
+			if     align = gp_align_center : center
+			elseif align = gp_align_left   : llcorner
+			elseif align = gp_align_right  : lrcorner fi
+		pict;
 		
-		pict
+		(pict shifted (shift_x, shift_y))
 	enddef;
+	
+	% % obsolete code to be removed
+	%
+	% % horizontal alignment
+	% if align = gp_align_center :
+	% 	pict := pict shifted (xpart(.5[llcorner pict,lrcorner pict]),0);
+	% elseif align = gp_align_left :
+	% 	pict := pict shifted (- xpart(llcorner pict),0);
+	% elseif align = gp_align_right :
+	% 	pict := pict shifted (- xpart(lrcorner pict),0);
+	% fi;
+	% % Hans wanted to persuade me to make the code shorter
+	% % (zero is replicated three times), but I prefer clarity against sparing
+	% % two bytes
+	% 
+	% pict
 
-	def gp_put_text(expr pos, angle, align, str) =
-		draw (gp_the_text(align, str) scaled gp_scale_text rotated angle shifted pos) withcolor gp_color_current;
-	%	draw bbox ((gp_the_text(align, str) rotated angle shifted pos)) withcolor gp_color_current;
+
+	% Places text on position "pos":
+	% - vertically centered
+	% - horizontal alignment is determined from optional arguments - centered by default
+	% - angle of rotation from optional parameters
+	% - magnification is determined from "gp_scale_text"
+	%
+	% syntax:
+	%   gp_put_text((1cm,2cm),\sometxt[gp]{without optional parameters})
+	%   gp_put_text(origin, align_left, angle(15), \sometxt[gp]{with an arbitrary number of optional parameters})
+	%
+	% The default alignment is centered, the default angle of rotation is zero.
+	% \sometxt{} or (theoretically) any picture argument should come last
+	def gp_put_text(expr pos)(text t) =
+		save arg_angle; arg_angle=0;
+		save arg_align; arg_align=gp_align_center;
+
+		save pict; picture pict;
+		
+		begingroup;
+		
+		save left, right, center;
+		left   = gp_align_left;
+		right  = gp_align_right;
+		center = gp_align_center;
+		
+		% dirty trick: let makes the comma behave as semicolon,
+		% allowing comma-separated functions in "text t"
+		let@=,;
+
+		def angle(expr a) =
+			let,=@; let@=,;
+			arg_angle := a;
+			let,=;;
+		enddef;
+
+		% def align_left =
+		% 	let,=@; let@=,;
+		% 	arg_align := gp_align_left;
+		% 	let,=;;
+		% enddef;
+		% def align_right =
+		% 	let,=@; let@=,;
+		% 	arg_align := gp_align_right;
+		% 	let,=;;
+		% enddef;
+		% def align_center =
+		% 	let,=@; let@=,;
+		% 	arg_align := gp_align_center;
+		% 	let,=;;
+		% enddef;
+		
+		def align(expr a) =
+			let,=@; let@=,;
+			arg_align := a;
+			let,=;;
+		enddef;
+
+		% converts the whole argument into a picture
+		%
+		% The problem is that \sometxt[gp]{text} is the very last command and cannot be captured as an image otherwise
+		% if you know a cleaner solution, please let me know
+		vardef dummy(text tt) =
+			tt
+		enddef;
+		pict := dummy(t);
+
+		let,=@;
+		endgroup;
+
+		draw (gp_the_text(arg_align, pict) scaled gp_scale_text rotated arg_angle shifted pos) withcolor gp_color_current;	
 	enddef;
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -352,6 +558,9 @@ boolean context_gplot ; context_gplot := true;
 	numeric gp_num_patterns; gp_num_patterns := 11;
 	% TODO: redraw the patterns if necessary (if linewidth changes for example)
 	numeric gp_pattern_linewidth; gp_pattern_linewidth := .5gp_scale_linewidth*gp_internal_linewidth;
+	
+	numeric gp_pattern_name_empty; gp_pattern_name_empty := 0;
+	numeric gp_pattern_name_full ; gp_pattern_name_full  := 3;
 
 	% default patterns (PostScript-like)
 	%
@@ -425,6 +634,32 @@ boolean context_gplot ; context_gplot := true;
 	gp_pattern_type[9] := gp_pattern_image_roof(1.5mm);
 	gp_pattern_type[10] := gp_pattern_image_brick(2mm,1mm);
 
+	% TODO: filling with a pattern: not implemented yet (implement approximately 8 patterns)
+	def gp_fill_pattern(expr p, pattern) =
+		save arg_pattern; arg_pattern = pattern mod gp_num_patterns;
+		
+		if pattern = gp_pattern_name_full:
+			% fill the area
+			fill p withcolor gp_color_current;
+		elseif pattern = gp_pattern_name_empty :
+			% nothing to do
+		else:
+			gp_pattern_current := gp_pattern_type[arg_pattern];
+			% TODO: check if it exists!
+
+			save maxi; maxi = max(10,bbwidth (p)/bbwidth (gp_pattern_current)+1);
+			save maxj; maxj = max(10,bbheight(p)/bbheight(gp_pattern_current)+1);
+			draw image (
+				for i=-1 upto maxi:
+				for j=0 upto maxj:
+					draw gp_pattern_current shifted (i*bbwidth(gp_pattern_current),j*bbheight(gp_pattern_current)) shifted llcorner p withcolor gp_color_current;
+				endfor;
+				endfor;
+				clip currentpicture to p;
+			);
+		fi;
+	enddef;
+
 	% fill a closed path with current color with density "density"
 	% (0: background color, 1: current color)
 	%
@@ -432,32 +667,73 @@ boolean context_gplot ; context_gplot := true;
 	%
 	% p - path to be filled
 	% density - density of the color (between 0 and 1)
-	def gp_fill_dens(expr p, density) =
+	def gp_fill_density(expr p, density) =
 		fill (p) withcolor density[gp_color_background,gp_color_current];
 	enddef;
-	% filling with density 1
-	def gp_fill(expr p) =
-		gp_fill_dens(p,1);
+	def gp_fill_transparent(expr p, density) =
+		fill (p) withcolor transparent(1,density,gp_color_current);
 	enddef;
-	% TODO: filling with a pattern: not implemented yet (implement approximately 8 patterns)
-	def gp_fill_pattern(expr p, pattern) =
-		% TODO: WRONG, just a bad temporary solution
-		begingroup;
-%		save gp_pattern_current; picture gp_pattern_current;
-		gp_pattern_current := gp_pattern_type[pattern mod gp_num_patterns];
-		% TODO: check if it exists!
+	% filling (default: with density 1)
+	% optional parameters:
+	%    transparent | (present or not, may be combined with both pattern and the solid fill)
+	%    density(float between [0,1])
+	%    pattern(number of pattern)
+	%
+	% If pattern is called at least once, [transparent] pattern will be drawn,
+	% otherwise just a [transparent] solid area.
+	def gp_fill(text t) =
+		% mandatory parameter: path to be stroked
+		save arg_path; path arg_path;
+		save arg_pattern;
+		% default density is 100 %
+		save arg_density; arg_density := 1;
+		% for transparent density fills or transparent patterns
+		% (but transparent patterns are not implemented yet)
+		save arg_is_transparent; boolean arg_is_transparent; arg_is_transparent := false;
 
-		draw image (
-			for i=-1 upto 5:
-			for j=-1 upto 5:
-				draw gp_pattern_current shifted (i*bbwidth(gp_pattern_current),j*bbheight(gp_pattern_current)) shifted llcorner p withcolor gp_color_current;
-			endfor;
-			endfor;
-			clip currentpicture to p;
-		);
+		% since we redefine "transparent", we need to restore the original macro again
+		% before calling gp_fill_transparent, which uses that one
+		begingroup;
+		save transparent, density, pattern;
+
+		let@=,;
+
+		% this function can be called for transparent (solid) fills or patterns
+		def transparent =
+			let,=@; let@=,;
+			arg_is_transparent := true;
+			let,=;;
+		enddef;
+
+		def density(expr dens) =
+			let,=@; let@=,;
+			arg_density := dens;
+			let,=;;
+		enddef;
+
+		def pattern(expr pat) =
+			let,=@; let@=,;
+			arg_pattern := pat;
+			let,=;;
+		enddef;
+
+		% execute the content ("read function arguments")
+		let,=;;
+		% this will read the first mandatory argument (path) into arg_p and execute any subsequent functions
+		arg_path := t;
+		let,=@;
 		endgroup;
-%
-%		fill (p) withcolor ((pattern mod 8)/8)[gp_color_background,black];
+
+		% pattern fill
+		if known arg_pattern:
+			gp_fill_pattern(p, arg_pattern);
+		% transparent solid fill
+		elseif arg_is_transparent:
+			gp_fill_transparent(p, arg_density);
+		% non-transparent solid fill
+		else:
+			gp_fill_density(p,arg_density);
+		fi;
 	enddef;
 
 	def gp_draw(expr p) =
@@ -517,7 +793,7 @@ boolean context_gplot ; context_gplot := true;
 	gp_point_shape[3] := (-1,-1)--(1,-1)--(1,1)--(-1,1)--cycle;
 	gp_point_shape[4] := gp_point_shape[3];
 	% 5, 6 - circle
-	gp_point_shape[5] := fullcircle scaled 2;
+	gp_point_shape[5] := fullcircle scaled 1.5;
 	gp_point_shape[6] := gp_point_shape[5];
 	% 7, 8 - triangle
 	% scaled is such a way that it's exactly 2 units wide
@@ -554,7 +830,7 @@ boolean context_gplot ; context_gplot := true;
 		if numeric n :
 			if n = -1 :
 				% point type -1 is always a dot
-				pict := image( fill fullcircle scaled gp_linewidth; );
+				pict := image( fill fullcircle scaled 2gp_linewidth; );
 			else :
 				if gp_points_with = gp_points_with_metapost :
 					% TODO
@@ -578,5 +854,51 @@ boolean context_gplot ; context_gplot := true;
 
 	endinput
 
-end
+end.
 
+
+% How to trick metapost to use comma between macros
+%
+%beginfig(1);
+%
+%def do_something(expr xx, yy)(text t) =
+%	save c; color c; c = black;
+%	save d; numeric d; d = 5pt;
+%
+%	let@=,;
+%
+%	def set_color(expr col) =
+%		let,=@;
+%		let@=,;
+%		c := col;
+%		let,=;;
+%	enddef;
+%
+%	def set_size(expr size) =
+%		let,=@;
+%		let@=,;
+%		d := size;
+%		let,=;;
+%	enddef;
+%
+%	t;
+%	let,=@;
+%
+%	fill fullcircle scaled d shifted (xx,yy) withcolor c;
+%enddef;
+%
+%do_something(1cm,2cm,set_color(blue));
+%do_something(2cm,1cm,set_size(10pt));
+%% this works OK
+%%do_something(2.5cm,1.5cm,set_color(red) set_size(8pt));
+%
+%% this works OK
+%%do_something(2cm,2.5cm,set_color(green);set_size(8pt));
+%
+%% but the following syntax looks better
+%do_something(2.5cm,1.5cm,set_color(blue),set_size(8pt),set_color(red),set_size(2pt));
+%
+%draw unitsquare scaled 3cm;
+%
+%endfig;
+%end.
