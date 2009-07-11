@@ -85,6 +85,8 @@
 	% % linewidth scale
 	% gp_scale_linewidth := \gp:term:context:linewidth;
 	
+	gp_points_with := gp_points_with_\@@GNUPLOT@term@context@points;
+	
 \stopMPextensions
 
 %D (hopefully) temporary solution for handling the color in expressions like
@@ -130,21 +132,25 @@
 %D Redefining low-level macros might be a bit dangerous, esp. since
 %D they tend to change over time.
 %D
+%D At the moment the hack only works in MKII; for MKIV it needs to be fixed
+%D
 %D TODO: remind Hans to implement it in core ;)
 %D       and remove this patch from the module
+%D
+\ifx\directlua\undefined
+\long\def\redofiltersometxt[#1]%
+{\doifnextcharelse[{\reredofiltersometxt[#1]}{\redodofiltersometxt[#1]}}
 
-% \long\def\redofiltersometxt[#1]%
-% {\doifnextcharelse[{\reredofiltersometxt[#1]}{\redodofiltersometxt[#1]}}
-% 
-% \long\def\redodofiltersometxt[#1]#2%
-%   {\increment\txtcounter
-%    \TeXtext[#1]\txtcounter{#2}%
-%    \filtersometxt}
-% 
-% \long\def\reredofiltersometxt[#1][#2]#3%
-%   {\increment\txtcounter
-%    \TeXtext[#1]\txtcounter{\switchtobodyfont[#2]\strut#3}%
-%    \filtersometxt}
+\long\def\redodofiltersometxt[#1]#2%
+  {\increment\txtcounter
+   \TeXtext[#1]\txtcounter{#2}%
+   \filtersometxt}
+
+\long\def\reredofiltersometxt[#1][#2]#3%
+  {\increment\txtcounter
+   \TeXtext[#1]\txtcounter{\switchtobodyfont[#2]\strut#3}%
+   \filtersometxt}
+\fi
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -780,6 +786,7 @@
 	%	\edef\gp:term:context:dashlength{\@@GNUPLOT@term@context@dashlength}
 	%	% linewidth scale
 	%	\edef\gp:term:context:linewidth{\@@GNUPLOT@term@context@linewidth}
+	%	\doifsamestringelse{\@@GNUPLOT@term@context@points}{metapost}% tex or metapost
 	}
 
 \setupGNUPLOTterminal

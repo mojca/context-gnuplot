@@ -436,6 +436,22 @@ boolean context_gnuplot ; context_gnuplot := true;
 	% you'll get 7pt, not 10pt (but using the scaled 10pt design size ;)
 	numeric gp_scale_text; gp_scale_text := 1;
 	
+	% Returns an image with colored text according to current color
+	% This only makes sense for mkiv text. Mkii is handled with \sometxt
+	% and colors are working properly there. We could be using textext("")
+	% in the low level, but we redefined the command just before calling this funtion
+	% for text labels, so we really need something more low-level (rawtextext in this case)
+	vardef gp_colored_mkiv_text(expr str) =
+	
+		% since withcolor doesn't work any more, we need to provide a workaround.
+		save r, g, b;
+		r = redpart   gp_color_current;
+		g = greenpart gp_color_current;
+		b = bluepart  gp_color_current;
+
+		rawtextext("\colored[r=" & decimal(r) & ",g=" & decimal(g) & ",b=" & decimal(b) & "]{" & str & "}")
+	enddef;
+	
 	% Returns the (image of) text: vertically centered and horizontally aligned
 	% according to the parameter align, which can be one of:
 	% - gp_align_center
@@ -494,6 +510,8 @@ boolean context_gnuplot ; context_gnuplot := true;
 		save pict; picture pict;
 		
 		begingroup;
+		% save the original meaning of textext
+		save textext;
 		
 		save left, right, center;
 		left   = gp_align_left;
@@ -537,9 +555,12 @@ boolean context_gnuplot ; context_gnuplot := true;
 		% while in mkiv it falls back to textext.drt,
 		% and that one has problems if comma gets redefined,
 		% so we need to change definition of comma back to its original value first
+		%
+		% this trick also comes in handy to handle colors & fonts properly
 		vardef textext@#(expr txt) =
 			let,=@;
-			rawtextext(txt)
+			
+			gp_colored_mkiv_text(txt)
 		enddef ;
 
 		% converts the whole argument into a picture
@@ -554,7 +575,7 @@ boolean context_gnuplot ; context_gnuplot := true;
 		let,=@;
 		endgroup;
 
-		draw (gp_the_text(arg_align, pict) scaled gp_scale_text rotated arg_angle shifted pos) withcolor gp_color_current;	
+		draw (gp_the_text(arg_align, pict) scaled gp_scale_text rotated arg_angle shifted pos) withcolor gp_color_current;
 	enddef;
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -846,8 +867,14 @@ boolean context_gnuplot ; context_gnuplot := true;
 					% TODO
 					pict := gp_point_pt[(n mod gp_num_points_with_metapost)];
 				else :
-					pict := sometxt((n mod gp_num_points_with_tex) + 1 + 500);
-					% XXX: 500 is a hack (see m/t-gnuplot.tex) and might need a fix
+					% MK IV; TODO: not sure if relying on context_mlib is safe
+					if known context_mlib :
+						pict := gp_colored_mkiv_text("\convertnumber{\currentGNUPLOTpointset}{" & decimal(n mod gp_num_points_with_tex + 1) & "}");
+					% MK II
+					else :
+						pict := sometxt((n mod gp_num_points_with_tex) + 1 + 500);
+						% XXX: 500 is a hack (see m/t-gnuplot.tex) and might need a fix
+					fi;
 				fi;
 			fi;
 		elseif picture n:
