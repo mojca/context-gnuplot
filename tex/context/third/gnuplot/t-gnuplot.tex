@@ -133,18 +133,18 @@
 %D TODO: remind Hans to implement it in core ;)
 %D       and remove this patch from the module
 
-\long\def\redofiltersometxt[#1]%
-{\doifnextcharelse[{\reredofiltersometxt[#1]}{\redodofiltersometxt[#1]}}
-
-\long\def\redodofiltersometxt[#1]#2%
-  {\increment\txtcounter
-   \TeXtext[#1]\txtcounter{#2}%
-   \filtersometxt}
-
-\long\def\reredofiltersometxt[#1][#2]#3%
-  {\increment\txtcounter
-   \TeXtext[#1]\txtcounter{\switchtobodyfont[#2]\strut#3}%
-   \filtersometxt}
+% \long\def\redofiltersometxt[#1]%
+% {\doifnextcharelse[{\reredofiltersometxt[#1]}{\redodofiltersometxt[#1]}}
+% 
+% \long\def\redodofiltersometxt[#1]#2%
+%   {\increment\txtcounter
+%    \TeXtext[#1]\txtcounter{#2}%
+%    \filtersometxt}
+% 
+% \long\def\reredofiltersometxt[#1][#2]#3%
+%   {\increment\txtcounter
+%    \TeXtext[#1]\txtcounter{\switchtobodyfont[#2]\strut#3}%
+%    \filtersometxt}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -500,6 +500,7 @@
    %
    % XXX: no idea why this is needed, but otherwise it complains that @@GNUPLOTpointset is undefined
    \edef\currentGNUPLOTpointset{\@@GNUPLOTpointset}%
+   \ifx\directlua\undefined
    \startTeXtexts
     \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}%
        % +500 is a hack (hopefully the plot doesn't contain more than 500 labels)
@@ -508,6 +509,7 @@
        {\TeXtext{\numexpr\recurselevel+500\relax}{{\convertnumber{\currentGNUPLOTpointset}{\recurselevel}}}}%
        {\exitloop}}%
    \stopTeXtexts
+   \fi
    % \gp:num:pointswithtex is passed to metapost, so that it knows
    % how many points are defined and chooses the proper point
    % form a set of the defined ones

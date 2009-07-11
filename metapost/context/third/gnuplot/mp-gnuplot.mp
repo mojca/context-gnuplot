@@ -532,6 +532,16 @@ boolean context_gnuplot ; context_gnuplot := true;
 			let,=;;
 		enddef;
 
+		% this is only for mkiv
+		% in mkii, \sometxt behaves as an image and has no problems
+		% while in mkiv it falls back to textext.drt,
+		% and that one has problems if comma gets redefined,
+		% so we need to change definition of comma back to its original value first
+		vardef textext@#(expr txt) =
+			let,=@;
+			rawtextext(txt)
+		enddef ;
+
 		% converts the whole argument into a picture
 		%
 		% The problem is that \sometxt[gp]{text} is the very last command and cannot be captured as an image otherwise
