@@ -46,6 +46,7 @@
 \def\c!terminal {terminal}
 \def\c!options  {options}
 \def\c!pointset {pointset}
+\def\c!purge    {purge}
 
 %D MPextensions
 %D
@@ -148,10 +149,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%D For the old method of \type{put_text("some text")} using textext:
-%D not used/supported any more, but still here for testing purposes
-%D (to be removed in the future)
-\forceMPTEXcheck{put_text}
+%D This was needed for the old method of
+%D \type{put_text("some text")} using textext: not used/supported any more
+%\ifx\directlua\undefined
+%	\forceMPTEXcheck{put_text}
+%\fi
 %\runMPTEXgraphicstrue
 
 \newcounter\GNUPLOTnumber
@@ -164,35 +166,31 @@
 %D and will be place on the top of the created \GNUPLOT\ script.
 %D
 %D \starttyping
-%D \startMPinclusions
+%D \startGNUPLOTinclusions
 %D    set xlabel '$x$'
 %D    set ylabel '$y$'
 %D    set format y "%.1f"
-%D \stopMPinclusions
+%D \stopGNUPLOTinclusions
 %D
-%D \startGNUPLOTscript{sin}
+%D \startGNUPLOTscript[sin]
 %D    plot sin(x)
 %D \stopGNUPLOTscript
-%D \startGNUPLOTscript{cos}
+%D \startGNUPLOTscript[cos]
 %D    plot cos(x)
 %D \stopGNUPLOTscript
 %D \stoptyping
-
-%D The code is not 100\% robust. Different characters and/or expansions may cause problems.
-%D \type{\%} takes care for not ignoring what comes after \type{%}.
-%D That might be only start of the game.
 \long\def\startGNUPLOTinclusions
-  {\bgroup
-   \obeylines
-   \catcode`\%=\@@letter
-   \catcode`\|=\@@letter
-   \dostartGNUPLOTinclusions}
+  {\def\stopGNUPLOTinclusions{\ifx\savebuffer\undefined \else \savebuffer[gnuplot-inclusions]\fi}
+   \dostartbuffer[gnuplot-inclusions][startGNUPLOTinclusions][stopGNUPLOTinclusions]}
 
-\long\def\dostartGNUPLOTinclusions#1\stopGNUPLOTinclusions
-  {\gdef\GNUPLOTinclusions{#1}%
-   \egroup}
+% \def\resetGNUPLOTinclusions{\let\GNUPLOTinclusions\empty}
 
-\def\resetGNUPLOTinclusions{\let\GNUPLOTinclusions\empty}
+% creates an empty file (there must be a cleaner way to do it)
+\def\resetGNUPLOTinclusions
+  {\immediate\openout\scratchwrite=\jobname-gnuplot-inclusions.tmp
+   \immediate\closeout\scratchwrite}
+
+%\startbuffer[gnuplot-inclusions]\stopbuffer\ifx\savebuffer\undefined \else \savebuffer[gnuplot-inclusions]\fi}
 
 \resetGNUPLOTinclusions
 
@@ -200,7 +198,7 @@
 %D when drawing two plots inside the same script, like that:
 %D
 %D \starttyping
-%D \startGNUPLOTscript{sin and cos}
+%D \startGNUPLOTscript[sin and cos]
 %D    set xlabel '$x$'
 %D    set ylabel '$y$'
 %D    set format y "%.1f"
@@ -220,80 +218,46 @@
 %D \stopGNUPLOTscript
 %D \stoptyping
 
-%\long\def\startGNUPLOTscript#1%
-%  {\bgroup
-%   \obeylines
-%   \catcode`\%=\@@letter
-%   \dostartGNUPLOTscript{#1}}
-
 \def\startGNUPLOTscript
   {\bgroup\dosingleempty\dostartGNUPLOTscript}
 
-\def\redostartGNUPLOTscript#1
-  {\obeylines
-   \catcode`\%=\@@letter
-   \catcode`\|=\@@letter
-   \catcode`\$=\@@letter
-   \dodostartGNUPLOTscript{#1}%
-%\dostartGNUPLOTscript[#2]
-}
+% \def\redostartGNUPLOTscript#1
+%   {\obeylines
+%    \catcode`\%=\@@letter
+%    \catcode`\|=\@@letter
+%    \catcode`\$=\@@letter
+%    \dodostartGNUPLOTscript{#1}%
+% %\dostartGNUPLOTscript[#2]
+% }
+% 
+% \def\dostartGNUPLOTscript[#1]%
+%   {\iffirstargument
+%      \obeylines
+%      \catcode`\%=\@@letter
+%      \catcode`\|=\@@letter
+%      \catcode`\$=\@@letter
+%      \dodostartGNUPLOTscript{#1}%
+%    \else
+%      \redostartGNUPLOTscript
+%    \fi
+% }
 
 \def\dostartGNUPLOTscript[#1]%
-  {\iffirstargument
-     \obeylines
-     \catcode`\%=\@@letter
-     \catcode`\|=\@@letter
-     \catcode`\$=\@@letter
+  {%\iffirstargument
      \dodostartGNUPLOTscript{#1}%
-   \else
-     \redostartGNUPLOTscript
-   \fi
+   %\else
+   %  \dodostartGNUPLOTscript
+   %\fi
 }
 
-% FIXME:
-% Math labels still don't work properly
-%    plot x t '$\frac{2}{\sqrt{\pi}}e^{-x^2}$'
-% will fail for example.
-%
-% Taco suggested to put \detokenize in front of the argument,
-% but then I run into problems with newlines.
-% I've lost too many nerves with ^^M already.
-% This item should be somewhere on top of priority list,
-% but I'm no TeXacker.
-%
-\long\def\dodostartGNUPLOTscript#1#2\stopGNUPLOTscript
+% gps:n:{name} = gnuplotscript : number : {name} - number of script with name {name}
+\long\def\dodostartGNUPLOTscript#1%#2\stopGNUPLOTscript
   {\doglobal\increment\GNUPLOTnumber
    \letgvalue{gps:n:#1}\GNUPLOTnumber
-   \setgvalue{gps:d:\GNUPLOTnumber}{#2}%
-%   \setgvalue{gps:d:\GNUPLOTnumber}{\detokenize{#2}}%
-   \egroup}
-
-\long\def\dodostartGNUPLOTscript#1#2\stopGNUPLOTscript
-  {\doglobal\increment\GNUPLOTnumber
-   \letgvalue{gps:n:#1}\GNUPLOTnumber
-   \setgvalue{gps:d:\GNUPLOTnumber}{#2}%
-%   \setgvalue{gps:d:\GNUPLOTnumber}{\detokenize{#2}}%
-   \egroup}
-
-
-\newtoks\everyGNUPLOTscript
-
-%D We need to preserve newline characters (\TeX\ doesn't distinguish them from spaces).
-%D Finding the proper solution has costed quite some nerves: most solutions resulted in \type{^M}.
-
-\appendtoks
-    \obeylines
-    \def\obeyedline{\outputnewlinechar}%
-\to \everyGNUPLOTscript
-
-%D Content of GNUPLOTscript has to be handled literally:
-%D backslash (\letterbackslash) and percent (\%) may not interfere with \TeX.
-
-\appendtoks
-    \let\%\letterpercent
-    \def\ {\letterbackslash\outputnewlinechar}%
-    \catcode`\$=\@@letter
-\to \everyGNUPLOTscript
+   % in case of LuaTeX we need to write the buffer into file explicitely
+   \def\stopGNUPLOTscript{\egroup \ifx\savebuffer\undefined \else \savebuffer[gnuplot-\GNUPLOTnumber]\fi}
+   \dostartbuffer[gnuplot-\GNUPLOTnumber][startGNUPLOTscript][stopGNUPLOTscript]
+   }
 
 % When are the graphics processed/read?
 %
@@ -437,7 +401,7 @@
 		\doifmode{*\v!first}{% (perhaps also: if files haven't changed)
 			\bgroup
 			% catcodes trickery & alike
-			\the\everyGNUPLOTscript
+			%\the\everyGNUPLOTscript
 			% open file for writing
 			\immediate\openout\scratchwrite=\GNUPLOTfile.plt
 			% TODO: terminal-specific options (default or provided by the user)
@@ -445,11 +409,15 @@
 			\immediate\write\scratchwrite{\letterhash\space Change \jobname.tex instead.}%
 			\immediate\write\scratchwrite{set terminal \@@GNUPLOToutput\space\@@GNUPLOToptions}%
 			% add common inclusions in scripts for multiple similar plots
-			\doifnotempty
-				{\GNUPLOTinclusions}{\immediate\write\scratchwrite{\GNUPLOTinclusions}}%
+			%\doifnotempty
+			%	{\GNUPLOTinclusions}{\immediate\write\scratchwrite{\GNUPLOTinclusions}}%
+			% include common gnuplot 'inclusions'
+			\immediate\write\scratchwrite{load '\jobname-gnuplot-inclusions.tmp'}%
+			% output file
 			\immediate\write\scratchwrite{set output "\@@GNUPLOTresult"}%
 			% write main contents of the script, like "plot sin(x)"
-			\immediate\write\scratchwrite{\getvalue{gps:d:\GNUPLOTnumber}}%
+			%\immediate\write\scratchwrite{\getvalue{gps:d:\GNUPLOTnumber}}%
+			\immediate\write\scratchwrite{load '\GNUPLOTfile.tmp'}%
 			\immediate\closeout\scratchwrite
 			\egroup
 			% TODO:
@@ -461,8 +429,10 @@
 			%     or some other error in script which results in empty output file
 			%
 			% run gnuplot & execute the script that has just been written
-			\executesystemcommand{texmfstart --ifchanged=\GNUPLOTfile.plt\space
-				--direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
+			% \executesystemcommand{texmfstart --ifchanged=\GNUPLOTfile.plt\space
+			% 	--direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
+			\executesystemcommand{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
+			\writestatus{aaa}{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}
 			\convertGNUPLOTgraphic
 		}%
 		% for ConTeXt terminal only - read the result
@@ -604,7 +574,7 @@
    %
    % (we might need some additional arguments later on, but for now the figure number should suffice)
    \def\startGNUPLOTgraphic
-      {\obeyMPlines % <- no longer a problem
+      {%\obeyMPlines % <- no longer a problem
        \def\obeyedline{}% <- thanks to this
        \dosingleargument\dostartGNUPLOTgraphic}%
    \long\def\dostartGNUPLOTgraphic[##1]##2\stopGNUPLOTgraphic
@@ -857,7 +827,7 @@
 %	[red,green,blue,magenta,cyan,yellow,black,orange,gray50]
 
 % TODO: testset is here only temporary & for testing
-\setupGNUPLOT[program=gnuplot,\c!terminal=context,\c!options=,\c!pointset=gnuplot:pointset] % colors=postscript
+\setupGNUPLOT[program=gnuplot,\c!terminal=context,\c!purge=\v!yes,\c!options=,\c!pointset=gnuplot:pointset] % colors=postscript
 
 %D Some additional typescripts which enable us using font "Arial" and "Helvetica"
 
@@ -872,15 +842,28 @@
   \definefontsynonym [SerifCaps]        [Helvetica]
 \stoptypescript
 
-\starttypescript [gnuplot] [texnansi,ec]
-  \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
-  \definetypeface [Helvetica] [ss] [sans]  [helvetica] [default] [encoding=\typescripttwo]
-  \definetypeface [Arial] [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
-  \definetypeface [Arial] [ss] [sans]  [helvetica] [default] [encoding=\typescripttwo]
-\stoptypescript
+\beginOLDTEX
 
-% TODO: fix for XeTeX
-\usetypescript[gnuplot][ec]
+  \starttypescript [gnuplot] [texnansi,ec]
+    \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
+    \definetypeface [Helvetica] [ss] [sans]   [helvetica] [default] [encoding=\typescripttwo]
+    \definetypeface [Arial]     [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
+    \definetypeface [Arial]     [ss] [sans]   [helvetica] [default] [encoding=\typescripttwo]
+  \stoptypescript
+  \usetypescript[gnuplot][ec]
+
+\endOLDTEX
+\beginNEWTEX
+
+  \starttypescript [gnuplot]
+    \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default]
+    \definetypeface [Helvetica] [ss] [sans]   [helvetica] [default]
+    \definetypeface [Arial]     [rm] [serif]  [helvetica] [default]
+    \definetypeface [Arial]     [ss] [sans]   [helvetica] [default]
+  \stoptypescript
+  \usetypescript[gnuplot]
+
+\endNEWTEX
 
 \stopmodule
 
