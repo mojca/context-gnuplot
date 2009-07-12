@@ -614,10 +614,10 @@
 
 %D We need to preserve line breaks, otherwise metapost runs into troubles for longer input.
 \def\startGNUPLOTpage
-	{\obeyMPlines\dostartGNUPLOTpage}
+	{\begingroup\obeyMPlines\dostartGNUPLOTpage}
 
-\long\def\dostartGNUPLOTpage#1\stopGNUPLOTpage%
-	{\startMPpage#1\stopMPpage}
+\long\def\dostartGNUPLOTpage#1\stopGNUPLOTpage
+	{\endgroup\startMPpage#1\stopMPpage}
 
 
 % TODO: currently, the following definitions are used,
