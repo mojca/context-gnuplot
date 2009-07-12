@@ -669,6 +669,9 @@ boolean context_gnuplot ; context_gnuplot := true;
 	def gp_fill_pattern(expr p, pattern) =
 		save arg_pattern; arg_pattern = pattern mod gp_num_patterns;
 		
+		if arg_is_transparent = false:
+			fill p withcolor gp_color_background;
+		fi;
 		if pattern = gp_pattern_name_full:
 			% fill the area
 			fill p withcolor gp_color_current;
