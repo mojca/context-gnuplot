@@ -448,7 +448,7 @@
 % \dodouseGNUPLOTgraphic[name][numbers][options]
 \def\dodouseGNUPLOTgraphic[#1][#2][#3]%
 	{\bgroup
-	\doifdefined{gps:n:#1}
+	\doifdefinedelse{gps:n:#1}
 		{\edef\GNUPLOTnumber{\getvalue{gps:n:#1}}%
 		 \edef\GNUPLOTfile  {\bufferprefix gnuplot-\GNUPLOTnumber}%
 		\writeandprocessGNUPLOTscript{#1}%
@@ -491,6 +491,27 @@
 			}%
 		}%
 	}%
+	% else part - in case that graphic gets included with \processGNUPLOTfile[name][file]
+	{\doifelse{\@@GNUPLOTterminal}{context}
+		% TODO: this part has been literally copied from above; create a subroutine instead
+		{\doifelse{#2}{}%
+			% if no explicit figure number was specified, include all the figures
+			{\doloop
+				{\doifMPgraphicelse{gpg:#1:\recurselevel}%
+				{\scale[#3]{\reuseMPgraphic{gpg:#1:\recurselevel}}}%
+				{\exitloop}}}%
+			% if numbers were specified, include the figures specified in the list only
+			{\begingroup
+				\def\useGNUPLOTgraphicN##1{\doifMPgraphicelse
+					{gpg:#1:##1}%
+					{\scale[#3]{\reuseMPgraphic{gpg:#1:##1}}}%
+					% if graphic doesn't exist: draw a dummy frame instead and warn the user
+					{\scale[#3]{\framed[frame=on,width=5in,height=3in,align={middle,lohi}]{GNUPLOT graphic #1, Nr. ##1 doesn't exist}}}}%
+				\processcommalist[#2]\useGNUPLOTgraphicN
+				\endgroup
+			}%
+		}%
+		{\message{The gnuplot graphic #1 has not been defined.}}}%
 	\egroup}
 
 %D \macros
