@@ -1,6 +1,6 @@
 %D \module
 %D   [       file=t-gnuplot,
-%D        version=2007.02.07,
+%D        version=2011.01.10,
 %D          title=\CONTEXT\ Extra Modules,
 %D       subtitle=\GNUPLOT\ Inclusion,
 %D         author={Hans Hagen, Taco Hoekwater, Mojca Miklavec, (Aditya Mahajan)},
@@ -435,10 +435,10 @@
 			%     or some other error in script which results in empty output file
 			%
 			% run gnuplot & execute the script that has just been written
-			% \executesystemcommand{texmfstart --ifchanged=\GNUPLOTfile.plt\space
+			% \executesystemcommand{mtxrun --ifchanged=\GNUPLOTfile.plt\space
 			% 	--direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
-			\executesystemcommand{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
-			\writestatus{aaa}{texmfstart --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
+			\executesystemcommand{mtxrun --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
+			\writestatus{aaa}{mtxrun --direct \@@GNUPLOTprogram\space\GNUPLOTfile.plt}%
 			\convertGNUPLOTgraphic
 		}%
 		% for ConTeXt terminal only - read the result
@@ -481,7 +481,7 @@
 		{\doifelse{#2}{}%
 			% if no explicite figure number was specified, include all the pages
 			% TODO: properly handle METAPOST & PNG (only works for (E)PS & PDF) !!!
-			{\getfiguredimensions[\@@GNUPLOTresult]%
+			{\getfiguredimensions[\@@GNUPLOTfinalresult]%
 				\dorecurse{\noffigurepages}{\externalfigure[\@@GNUPLOTfinalresult][page=\recurselevel,#3]}}%
 			% if numbers were specified, include the pages specified in the list only
 			{\begingroup
@@ -574,7 +574,7 @@
 
 % TODO: check if write18 is enabled; if not, issue a command and warn the user that running the module might be pointless or that he/she has to run gnuplot on the produced files manually
 \def\convertGNUPLOTgraphic
-  {\doifsomething\@@GNUPLOThandle{\executesystemcommand{\@@GNUPLOThandle}}}
+  {\doifsomething\@@GNUPLOThandle{\writestatus{conversion}{\@@GNUPLOThandle}\executesystemcommand{\@@GNUPLOThandle}}}
 
 %D \macros
 %D   {processGNUPLOTfile}
@@ -661,22 +661,22 @@
 %                    name       "set term" suffix conversion (system command)                         gnuplot's result          final result
 % (suffix is probably not needed any more since full names were introduced)
 \defineGNUPLOThandle
-	{postscript}{postscript color}{ps}{texmfstart pstopdf --method=raw \GNUPLOTfile-ps.ps}
+	{postscript}{postscript color}{ps}{mtxrun pstopdf \GNUPLOTfile-ps.ps}
 	{\GNUPLOTfile-ps.ps}{\GNUPLOTfile-ps.pdf}
 \defineGNUPLOThandle
-	{ps}{postscript color}{ps}{texmfstart pstopdf -dAutoRotatePages=/PageByPage --method=raw \GNUPLOTfile-ps.ps}
+	{ps}{postscript color}{ps}{mtxrun pstopdf -dAutoRotatePages=/PageByPage \GNUPLOTfile-ps.ps}
 	{\GNUPLOTfile-ps.ps}{\GNUPLOTfile-ps.pdf}
 \defineGNUPLOThandle
-	{eps}{postscript color eps}{ps}{texmfstart pstopdf -dEPSCrop \GNUPLOTfile-eps.eps}
+	{eps}{postscript color eps}{ps}{mtxrun pstopdf -dEPSCrop \GNUPLOTfile-eps.eps}
 	{\GNUPLOTfile-eps.eps}{\GNUPLOTfile-eps.pdf}
 \defineGNUPLOThandle
 	{pdf}{pdf}{pdf}{}
 	{\GNUPLOTfile-pdf.pdf}{\GNUPLOTfile-pdf.pdf}
 \defineGNUPLOThandle
-	{metapost}{mp}{mp}{texmfstart mptopdf \GNUPLOTfile-mp.mp}
+	{metapost}{mp}{mp}{mtxrun mptopdf \GNUPLOTfile-mp.mp}
 	{\GNUPLOTfile-mp.mp}{\GNUPLOTfile-mp-0.pdf}
 \defineGNUPLOThandle
-	{mp}{mp}{mp}{texmfstart mptopdf \GNUPLOTfile-mp.mp}
+	{mp}{mp}{mp}{mtxrun mptopdf \GNUPLOTfile-mp.mp}
 	{\GNUPLOTfile-mp.mp}{\GNUPLOTfile-mp-0.pdf}
 \defineGNUPLOThandle
 	{png}{png}{png}{}
@@ -715,7 +715,7 @@
 	 suffix=ps,
 	 result=\GNUPLOTfile-ps.ps,
 	 % TODO: -dAutoRotatePages=/PageByPage or remove that option from the default ones
-	 convertwith={texmfstart pstopdf --method=raw \GNUPLOTfile-ps.ps},
+	 convertwith={mtxrun pstopdf \GNUPLOTfile-ps.ps},
 	 finalresult=\GNUPLOTfile-ps.pdf,
 	]
 %D Define \type{ps} as a synonym for \type{postscript} terminal
@@ -732,7 +732,7 @@
 	 suffix=eps,
 	 result=\GNUPLOTfile-eps.eps,
 	 % TODO: -dEPSCrop
-	 convertwith={texmfstart pstopdf -dEPSCrop \GNUPLOTfile-eps.eps},
+	 convertwith={mtxrun pstopdf -dEPSCrop \GNUPLOTfile-eps.eps},
 	 finalresult=\GNUPLOTfile-eps.pdf,
 	]
 
@@ -757,7 +757,7 @@
 	 defaultoptions=,
 	 suffix=mp,
 	 result=\GNUPLOTfile-mp.mp,
-	 convertwith={texmfstart mptopdf \GNUPLOTfile-mp.mp},
+	 convertwith={mtxrun mptopdf \GNUPLOTfile-mp.mp},
 	 % TODO: support for multiple graphics
 	 % one would need a switch in mptopdf, so that a single pdf would be created instead of multiple ones
 	 finalresult=\GNUPLOTfile-mp-0.pdf,
