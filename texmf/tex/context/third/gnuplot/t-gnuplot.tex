@@ -163,6 +163,17 @@
 %\runMPTEXgraphicstrue
 
 \newcounter\GNUPLOTnumber
+\newdimen\GNUPLOThcharsize
+\newdimen\GNUPLOTvcharsize
+
+% macro to calculate true character size from current font
+% (However it is not 100 % that it gets the job properly done
+%  in case that other font settings are used inside the picture.)
+\def\calculateGNUPLOTcharsize{%
+  \global\GNUPLOThcharsize=1.05\fontcharwd\font`0%
+  \global\GNUPLOTvcharsize=1.05\fontcharht\font`0%
+  \global\advance\GNUPLOTvcharsize by 1.05\fontchardp\font`g%
+}
 
 %D \macros
 %D   {startGNUPLOTinclusions, resetGNUPLOTinclusions}
@@ -406,6 +417,9 @@
 		% call to gnuplot and processing/converting the graphics is only needed in the first ConTeXt run
 		\doifmode{*\v!first}{% (perhaps also: if files haven't changed)
 			\bgroup
+			% for TikZ we want to calculate character size, so that it gets printed
+			% to inclusions with \@@GNUPLOToptions
+			\calculateGNUPLOTcharsize
 			% catcodes trickery & alike
 			%\the\everyGNUPLOTscript
 			% open file for writing
@@ -475,6 +489,14 @@
 				\processcommalist[#2]\useGNUPLOTgraphicN
 				\endgroup
 			}%
+		}{%
+		% for TikZ terminal only
+		\doifelse{\@@GNUPLOTterminal}{tikz}%
+		{\doifelse{#2}{}%
+			% if no explicit figure number was specified, include all the figures
+			{\input \@@GNUPLOTfinalresult }
+			% if numbers were specified, include the figures specified in the list only
+			{TODO}
 		}%
 		% for all the other terminals
 		% TODO: add more safety switches (if pages don't exist for example)
@@ -489,7 +511,7 @@
 				\processcommalist[#2]\useGNUPLOTgraphicN
 				\endgroup
 			}%
-		}%
+		}}%
 	}%
 	% else part - in case that graphic gets included with \processGNUPLOTfile[name][file]
 	{\doifelse{\@@GNUPLOTterminal}{context}
@@ -548,6 +570,9 @@
    \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}%
        {\edef\gp:num:pointswithtex{\recurselevel}}%
        {\exitloop}}%
+   % in case of TikZ terminal we have to generate the needed style files first
+   \doif{\@@GNUPLOTterminal}{tikz}
+       {\executesystemcommand{gnuplot -e "set term tikz context createstyle"}\usemodule[gnuplot-lua-tikz]}
    % TODO:
    % - issue a warning if user wants to use points with TeX,
    %   but pointset= is undefined (if the first point doesn't exist)
@@ -682,7 +707,13 @@
 	{png}{png}{png}{}
 	{\GNUPLOTfile-png.png}{\GNUPLOTfile-png.png}
 \defineGNUPLOThandle
-	{context}{context textscale \@@GNUPLOT@term@context@textscale}{tex}{}
+	{tikz}{tikz context createstyle
+	            size \@@GNUPLOT@term@tikz@width,\@@GNUPLOT@term@tikz@height\space
+	            charsize \the\GNUPLOThcharsize,\the\GNUPLOTvcharsize
+	}{tex}{}
+	{\GNUPLOTfile-tikz.tex}{\GNUPLOTfile-tikz.tex}
+\defineGNUPLOThandle
+	{context}{context size \@@GNUPLOT@term@context@width,\@@GNUPLOT@term@context@height\space textscale \@@GNUPLOT@term@context@textscale}{tex}{}
 	{\GNUPLOTfile-ctx.tex}{\GNUPLOTfile-ctx.tex}
 % \doifnotempty{\@@GNUPLOT@term@context@textscale}{textscale \@@GNUPLOT@term@context@textscale}
 
@@ -806,6 +837,10 @@
 		\doifsamestringelse{\@@GNUPLOT@term@context@dashed}{yes}% yes or no
 			{\edef\@@GNUPLOT@term@context@is@dashed{true}}%
 			{\edef\@@GNUPLOT@term@context@is@dashed{false}}%
+		\doifsamestring{\@@GNUPLOT@term@context@width}{default}
+			{\edef\@@GNUPLOT@term@context@width{5in}}
+		\doifsamestring{\@@GNUPLOT@term@context@height}{default}
+			{\edef\@@GNUPLOT@term@context@height{3in}}
 	%		{\edef\gp:term:context:dashed{true}}%
 	%		{\edef\gp:term:context:dashed{false}}%
 	%	% dashlength scale
@@ -826,6 +861,12 @@
 	 linewidth=1,      % scaling factor for line widths (1.0 means 0.4bp)
 	 textscale=1,      % scaling factor for text labels
 	 points=metapost]  % *metapost* | tex (Should points be drawn with MetaPost or TeX?)
+
+\setupGNUPLOTterminal
+	[tikz]
+	[width=5in,        % *5in* | default (todo)  | <dimension>
+	 height=3in,       % *3in* | default (todo) | <dimension>
+	]
 
 % TODO: better scaling
 \defineconversion
