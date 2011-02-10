@@ -1,0 +1,279 @@
+\setupcolors
+	[state=start]
+\enableregime
+	[utf-8]
+\setupinteraction
+	[state=start]
+
+
+\usemodule
+	[gnuplot]
+
+\setuplayout
+	[backspace=1in,
+	 width=middle,
+	 topspace=1in,
+	 heigh=middle,
+	 header=0pt,
+	 headerdistance=0pt]
+
+\setuphead
+	[title]
+	[align=middle,
+	 style=\bfc]
+\setuphead
+	[section]
+	[style=\bfb]
+\setuphead
+	[subsection]
+	[style=\bfa]
+
+\setupitemize
+	[headstyle=bold]
+
+% \usetypescript
+% 	[antykwa-torunska]
+% \setupbodyfont
+% 	[antykwa]
+
+\beginNEWTEX\usetypescript[lucida]    \endNEWTEX
+\beginOLDTEX\usetypescript[lucida][ec]\endOLDTEX
+\setupbodyfont
+	[lucida]
+
+\definecolor
+	[maincolor]
+	[darkblue]
+\definecolor
+	[lightblue]
+	[r=0.9,g=0.9,b=1]
+\definecolor
+	[screen]
+	[s=0.9]
+
+
+\logo [TEXLIVE] {\TeX\ Live}
+\logo [MIKTEX] {Mik\TeX}
+\logo [TIKZ] {Tik{\it Z}}
+
+\defineframedtext
+	[background]
+	[background=color,backgroundcolor=gray,width=\textwidth,frame=off,offset=2pt,style=type]
+
+\defineframedtext
+	[myinput]
+	[background=color,backgroundcolor=lightblue,width=\textwidth,frame=off,offset=2pt,style=type]
+
+% \setupbackgrounds
+% 	[background]
+% 	[background=color,backgroundcolor=gray,width=\textwidth,frame=off]
+
+\starttext
+
+\title{Using \color[maincolor]{\tt\bf context} and \color[maincolor]{\tt\bf tikz} terminal for gnuplot}
+
+\centerline{Mojca Miklavec, \date[y=2011,m=2,d=10]}
+
+\blank
+
+\placelist[section]
+
+\blank
+
+\section{Requirements}
+
+\startitemize[n,packed]
+\item Any working \ConTeXt\ installation (\ConTeXt\ Minimals, \TEXLIVE\ 2010 or \MIKTEX\ 2.9 or newer).
+\item The {\tt gnuplot} binary (or {\tt gnuplot.exe} under Windows) has to be in {\tt PATH} and needs to have support for {\tt context} and/or {\tt tikz} terminal built in.
+\item The latest version of gnuplot module for ConTeXt.
+\stopitemize
+
+
+\section{Installation}
+
+\subsection{\CONTEXT}
+
+TODO
+
+\subsection{Gnuplot}
+
+TODO
+
+You can check the list of supported terminals by typing \startlines
+\tt{gnuplot>} \bf set term
+\stoplines
+into gnuplot shell.
+
+\subsection{{\tt\bf t-gnuplot} module for \CONTEXT}
+
+Under \CONTEXT\ Minimals you can install the gnuplot module and \TIKZ\ with an additional switch when running {\tt f\/irst-setup}, for example:
+\startbackground
+\tt f\/irst-setup.sh -\/-extras=t-gnuplot,t-tikz
+\stopbackground
+
+If you have installed a {\tt complete} or {\tt context} scheme under \TEXLIVE, gnuplot module and \TIKZ\ might already be installed. Else you can use:
+\startbackground
+tlmgr install context-gnuplot\\
+tlmgr install pgf
+\stopbackground
+
+Under \MIKTEX\ the module is installed automatically when it is first used.
+
+\section{Simple examples}
+
+\subsection{Calling gnuplot directly}
+
+Let's first create a simple file (we will call it {\tt\it example.plt}, but you may choose any name) with the contents below.
+
+For {\tt context} terminal:
+\startmyinput
+set term context size 5in,3in standalone\\
+set output "fullpage-example.tex"\\
+plot sin(x)\\
+plot cos(atan(x))*sin(x)
+\stopmyinput
+
+For {\tt tikz} terminal:
+\startmyinput
+set term tikz context size 5in,3in standalone createstyle\\
+set output "fullpage-example.tex"\\
+plot sin(x)\\
+plot cos(atan(x))*sin(x)
+\stopmyinput
+
+In both cases the option {\tt standalone} is used to create a complete \CONTEXT\ document with one plot per page, including header and {\tt\textbackslash starttext \dots\ \textbackslash stoptext}, so that it can be compiled directly. The option {\tt createstyle} is used to create three files with required macros in working directory\footnote{An alternative is to place those three files somewhere where kpathsea can find them and omit the option {\tt createstyle}, just make sure that the versions of {\tt tikz} terminal and the files in your \TeX\ tree remain compatible.}
+
+Both terminals should give you almost equivalent results apart from default plot size. You are highly encouraged to specify the disired plot size explicitely. You may scale the plot later on, but you probably want to get the desired proportions from the start.
+
+Run gnuplot with
+\startbackground
+gnuplot example.plt
+\stopbackground
+and compile the result with any of the following three commands (depending on your preferred engine):
+\startbackground
+\hbox{\hbox to 25em{context fullpage-example.tex       \hss} {\rm\# for \LuaTeX}}
+\hbox{\hbox to 25em{texexec fullpage-example.tex       \hss} {\rm\# for \pdfTeX}}
+\hbox{\hbox to 25em{texexec --xtx fullpage-example.tex \hss} {\rm\# for \XeTeX} }
+\stopbackground
+
+They are almost equivalent except that \XeTeX\ lacks some advanced features (some patterns). The only major difference is the choice of fonts. If you want to typeset Arabic labels or use system fonts, you will probably want to choose \LuaTeX\ or \XeTeX. If you are using many graphical elements (like in 3D plots), you might want to go for \LuaTeX.
+
+You should get a {\sc pdf} document with two full-page plots that you can include into your document with \type{\externalfigure[fullpage-example][page=2]} for example.
+
+\placefigure[force]{}{\externalfigure[fullpage-example][page=2]}
+
+
+\subsection{Calling gnuplot from \TeX}
+
+As you can see you will always get Latin Modern font at 12pt unless you explicitely change it with {\tt header "\textbackslash setupbodyfont[...]"}. An easier way to make sure that the same font is used and to avoid having to call gnuplot manually is to simply type the gnuplot code inside your \CONTEXT\ document:
+
+\startTEX
+\usemodule
+	[gnuplot]
+\setupGNUPLOTterminal
+	[context]
+	[width=5in,height=2.5in,textscale=0.9]
+\setupGNUPLOTterminal
+	[tikz]
+	[width=5in,height=2.5in]
+\starttext
+
+\startGNUPLOTscript[myfunction]
+set samples 400
+set key left Left reverse
+set format y "%.1f"
+plot sin(x) t '$\sin(x)$' lw 3
+plot cos(atan(x))*sin(x) t '$\cos(\arctan(x))\sin(x)$' lw 3 lc 3
+\stopGNUPLOTscript
+
+\placefigure{none}{\useGNUPLOTgraphic[myfunction][2]}
+
+\setupGNUPLOT
+	[terminal=tikz]
+
+\placefigure{none}{\useGNUPLOTgraphic[myfunction][1]}
+
+\stoptext
+\stopTEX
+
+\bgroup
+\setupGNUPLOTterminal
+	[context]
+	[width=5in,height=2.5in,textscale=0.9]
+\setupGNUPLOTterminal
+	[tikz]
+	[width=5in,height=2.5in]
+\startGNUPLOTscript[myfunction]
+set samples 400
+set key left Left reverse
+set format y "%.1f"
+plot sin(x) t '$\sin(x)$' lw 3
+plot cos(atan(x))*sin(x) t '$\cos(\arctan(x))\sin(x)$' lw 3 lc 3
+\stopGNUPLOTscript
+\placefigure[force]{Framed second plot using {\tt context} terminal}
+	{\framed[offset=overlay,frame=off,background=color,backgroundcolor=lightblue]{\useGNUPLOTgraphic[myfunction][2]}}
+\setupGNUPLOT[terminal=tikz]
+\placefigure[force]{Framed first plot using {\tt tikz} terminal}
+	{\framed[offset=overlay,frame=off,background=color,backgroundcolor=lightblue]{\useGNUPLOTgraphic[myfunction][1]}}
+\egroup
+
+
+\subsection{Including pre-generated plots}
+
+TODO
+
+This is the syntax:
+\startTEX
+\processGNUPLOTfile[name][filename.tex]
+\useGNUPLOTgraphic[name]
+\stopTEX
+
+\section{Terminal options}
+
+\subsection{\tt\bf context}
+
+TODO
+
+\starttyping
+set term context {default}
+                 {defaultsize | size <scale> |
+                  size <xsize> {in|cm}, <ysize> {in|cm}}
+                 {input | standalone}
+                 {noheader | header "<header>"}
+                 {color | colour | monochrome}
+                 {mitered | rounded | beveled}
+                 {butt | round | squared}
+                 {dashed | solid}
+                 {dashlength | dl <DL>}
+                 {linewidth | lw <LW>}
+                 {textscale <textscale>}
+                 {pointswithmetapost | pointswithmp | pointswithtex}
+                 {defaultfont | font {<fontsize>} |
+                  font "<fontname>{,<fontsize>}" {fontsize}}
+\stoptyping
+
+\subsection{\tt\bf tikz}
+
+TODO
+
+\section{High-level configuration from \ConTeXt}
+
+TODO
+
+\section{Comparison of supported terminals}
+
+The gnuplot module for \ConTeXt\ supports the following terminals:
+\startitemize[packed]
+\head bitmap terminals\par
+	\startitemize[packed,joinedup]
+	\item\tt png, pngcairo
+	\stopitemize
+\head vector terminals\par
+	\startitemize[packed,joinedup]
+	\item\tt {\bf context}, {\bf tikz}
+	\item\tt metapost, postscript, pdf, pdfcairo
+	\stopitemize
+\stopitemize
+
+
+\stoptext

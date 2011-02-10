@@ -1,6 +1,6 @@
 %D \module
 %D   [       file=t-gnuplot,
-%D        version=2011.01.10,
+%D        version=2011.02.10,
 %D          title=\CONTEXT\ Extra Modules,
 %D       subtitle=\GNUPLOT\ Inclusion,
 %D         author={Hans Hagen, Taco Hoekwater, Mojca Miklavec, (Aditya Mahajan)},
@@ -10,6 +10,15 @@
 %C This module is part of the \CONTEXT\ macro||package and is
 %C therefore copyrighted by \PRAGMA. See mreadme.pdf for
 %C details.
+
+% begin info
+%
+% title   : Gnuplot module
+%
+% comment : simplifies inclusion of gnuplot-generated graphs into ConTeXt documents
+% status  : stable, supports both MKII and MKIV
+%
+% end info
 
 %D This module is used for creating gnuplot graphs on-the-fly and including them
 %D into documents.
@@ -165,6 +174,7 @@
 \newcounter\GNUPLOTnumber
 \newdimen\GNUPLOThcharsize
 \newdimen\GNUPLOTvcharsize
+\newcounter\tikzGNUPLOTnumber
 
 % macro to calculate true character size from current font
 % (However it is not 100 % that it gets the job properly done
@@ -390,6 +400,10 @@
 		% it would be better to call this \undefineMPgraphic{gpg:#1:\recurselevel} or something similar
 		{\letbeundefined{@@MPGgpg:#1:\recurselevel}}%
 		{\exitloop}}%
+	\doloop
+		{\doifdefinedelse{TKZp:#1:\recurselevel}%
+		{\letbeundefined{TKZp:#1:\recurselevel}}%
+		{\exitloop}}%
 	}%
 
 % TODO: this can probably be done in a better way
@@ -457,6 +471,7 @@
 		}%
 		% for ConTeXt terminal only - read the result
 		\doif{\@@GNUPLOTterminal}{context}{\processGNUPLOTfile[#1][\@@GNUPLOTresult]}%
+		\doif{\@@GNUPLOTterminal}{tikz}   {\processGNUPLOTfile[#1][\@@GNUPLOTresult]}%
 	}}}
 
 % \dodouseGNUPLOTgraphic[name][numbers][options]
@@ -464,7 +479,7 @@
 	{\bgroup
 	\doifdefinedelse{gps:n:#1}
 		{\edef\GNUPLOTnumber{\getvalue{gps:n:#1}}%
-		 \edef\GNUPLOTfile  {\bufferprefix gnuplot-\GNUPLOTnumber}%
+		 \edef\GNUPLOTfile  {\jobname-gnuplot-\GNUPLOTnumber}%
 		\writeandprocessGNUPLOTscript{#1}%
 		% "ctxtools --purge" should delete the gnuplot script and other intermediate files
 		% (but it seems that they are deleted automatically already; preferred or not?)
@@ -494,9 +509,20 @@
 		\doifelse{\@@GNUPLOTterminal}{tikz}%
 		{\doifelse{#2}{}%
 			% if no explicit figure number was specified, include all the figures
-			{\input \@@GNUPLOTfinalresult }
+			{\doloop
+				{\doifdefinedelse{TKZp:#1:\recurselevel}%
+				{\scale[#3]{\getvalue{TKZp:#1:\recurselevel}}}%
+				{\exitloop}}}%
 			% if numbers were specified, include the figures specified in the list only
-			{TODO}
+			{\begingroup
+				\def\useGNUPLOTgraphicN##1{\doifdefinedelse
+					{TKZp:#1:##1}%
+					{\scale[#3]{\getvalue{TKZp:#1:##1}}}%
+					% if graphic doesn't exist: draw a dummy frame instead and warn the user
+					{\scale[#3]{\framed[frame=on,width=5in,height=3in,align={middle,lohi}]{GNUPLOT graphic #1, Nr. ##1 doesn't exist}}}}%
+				\processcommalist[#2]\useGNUPLOTgraphicN
+				\endgroup
+			}%
 		}%
 		% for all the other terminals
 		% TODO: add more safety switches (if pages don't exist for example)
@@ -613,38 +639,48 @@
   {\dodoubleargument\doprocessGNUPLOTfile}
 
 \def\doprocessGNUPLOTfile[#1][#2]%
-  {% we first define two commands: \startGNUPLOTgraphic & \stopGNUPLOTgraphic to read the files in;
-   % files that gnuplot creates in non-standalone mode look approximately like this:
-   %
-   % \startGNUPLOTgraphic[1]
-   % ... metapost commands to draw the graph ...
-   % \stopGNUPLOTgraphic
-   % \startGNUPLOTgraphic[2]
-   % ... metapost commands to draw the graph ...
-   % \stopGNUPLOTgraphic
-   % ...
-   %
-   % while reading the file in, metapost graphics named "gpg:{name}:{number}" are defined
-   %
-   % (we might need some additional arguments later on, but for now the figure number should suffice)
-   \def\startGNUPLOTgraphic
-      {%\obeyMPlines % <- no longer a problem
-       \def\obeyedline{}% <- thanks to this
-       \dosingleargument\dostartGNUPLOTgraphic}%
-   \long\def\dostartGNUPLOTgraphic[##1]##2\stopGNUPLOTgraphic
-      {\startreusableMPgraphic{gpg:#1:##1}##2\stopreusableMPgraphic}%
-   %
-   % if gps:n:{name} (which is a number) is not defined,
-   % then we first have to increase the \GNUPLOTnumber counter and associate this name with the new number
-
-   % , then we should now also define
-   % gpe:{number}:context which should signal later on that the graphic
-%   \doifdefined{gps:n:#1}
-   % input the file
-   % TODO: error / warning if the files doesn't exist
-   \readlocfile{#2}{}{}% the third argument should be: if file not found
-   % this file is known
-   % TODO \letgvalue{gpf:#1}\plusone
+  {\bgroup
+      % for ConTeXt teminal
+      %--------------------
+      % we first define two commands: \startGNUPLOTgraphic & \stopGNUPLOTgraphic to read the files in;
+      % files that gnuplot creates in non-standalone mode look approximately like this:
+      %
+      % \startGNUPLOTgraphic[1]
+      % ... metapost commands to draw the graph ...
+      % \stopGNUPLOTgraphic
+      % \startGNUPLOTgraphic[2]
+      % ... metapost commands to draw the graph ...
+      % \stopGNUPLOTgraphic
+      % ...
+      %
+      % while reading the file in, metapost graphics named "gpg:{name}:{number}" are defined
+      %
+      % (we might need some additional arguments later on, but for now the figure number should suffice)
+      \def\startGNUPLOTgraphic
+         {%\obeyMPlines % <- no longer a problem
+          \def\obeyedline{}% <- thanks to this
+          \dosingleargument\dostartGNUPLOTgraphic}%
+      \long\def\dostartGNUPLOTgraphic[##1]##2\stopGNUPLOTgraphic
+         {\startreusableMPgraphic{gpg:#1:##1}##2\stopreusableMPgraphic}%
+      %------------------
+      % for TikZ terminal
+      %------------------
+      \setcounter\tikzGNUPLOTnumber\zerocount
+      \let\normalstarttikzpicture=\starttikzpicture
+      \let\normalstoptikzpicture=\stoptikzpicture
+      \long\def\starttikzpicture##1\stoptikzpicture%
+        {\increment\tikzGNUPLOTnumber
+         % \long\setgvalue{TKZp:#1:\tikzGNUPLOTnumber}{##1}}
+         \long\setgvalue{TKZp:#1:\tikzGNUPLOTnumber}{\hbox{\starttikzpicture##1\stoptikzpicture}}}
+      %---------
+      % for both
+      %---------
+      % input the file
+      % TODO: error / warning if the files doesn't exist
+      \readlocfile{#2}{}{}% the third argument should be: if file not found
+      % this file is known
+      % TODO \letgvalue{gpf:#1}\plusone
+   \egroup
   }
 
 %D \macros
@@ -698,6 +734,9 @@
 	{pdf}{pdf}{pdf}{}
 	{\GNUPLOTfile-pdf.pdf}{\GNUPLOTfile-pdf.pdf}
 \defineGNUPLOThandle
+	{pdfcairo}{pdfcairo}{pdf}{}
+	{\GNUPLOTfile-pdfcairo.pdf}{\GNUPLOTfile-pdfcairo.pdf}
+\defineGNUPLOThandle
 	{metapost}{mp}{mp}{mtxrun mptopdf \GNUPLOTfile-mp.mp}
 	{\GNUPLOTfile-mp.mp}{\GNUPLOTfile-mp-0.pdf}
 \defineGNUPLOThandle
@@ -706,6 +745,9 @@
 \defineGNUPLOThandle
 	{png}{png}{png}{}
 	{\GNUPLOTfile-png.png}{\GNUPLOTfile-png.png}
+\defineGNUPLOThandle
+	{pngcairo}{pngcairo}{png}{}
+	{\GNUPLOTfile-pngcairo.png}{\GNUPLOTfile-pngcairo.png}
 \defineGNUPLOThandle
 	{tikz}{tikz context createstyle
 	            size \@@GNUPLOT@term@tikz@width,\@@GNUPLOT@term@tikz@height\space
@@ -777,6 +819,15 @@
 	 convertwith=,
 	 finalresult=\GNUPLOTfile-pdf.pdf,
 	]
+\defineGNUPLOTterminal
+	[pdfcairo]
+	[terminal=pdfcairo,
+	 defaultoptions=,
+	 suffix=pdf,
+	 result=\GNUPLOTfile-pdfcairo.pdf,
+	 convertwith=,
+	 finalresult=\GNUPLOTfile-pdfcairo.pdf,
+	]
 
 %D \METAPOST\ terminal:
 %D - deprecated: use the \CONTEXT\ terminal instead,
@@ -811,7 +862,15 @@
 	 convertwith=,
 	 finalresult=\GNUPLOTfile-png.png,
 	]
-
+\defineGNUPLOTterminal
+	[pngcairo]
+	[terminal=pngcairo,
+	 defaultoptions=,
+	 suffix=png,
+	 result=\GNUPLOTfile-pngcairo.png,
+	 convertwith=,
+	 finalresult=\GNUPLOTfile-pngcairo.png,
+	]
 %D \CONTEXT\ terminal (native)
 \defineGNUPLOTterminal
 	[context]
