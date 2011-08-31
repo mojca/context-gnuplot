@@ -807,6 +807,11 @@ boolean context_gnuplot ; context_gnuplot := true;
 	vardef fullpolygon(expr n) =
 		(for i=1 upto n: (up rotated ((i-1)*360/n)) -- endfor cycle)
 	enddef;
+	% this is used in drawing and filling rectangles (not for points)
+	% arguments are lower left and size (size is usually smaller that coordinates - spares some bytes)
+	vardef gp_rect(expr ll_corner, size) =
+		(ll_corner -- (xpart ll_corner + xpart size,ypart ll_corner) -- (ll_corner shifted size) -- (xpart ll_corner,ypart ll_corner + ypart size) -- cycle)
+	enddef;
 
 	%-------------------------%
 	% point shape definitions %
