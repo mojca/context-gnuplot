@@ -897,6 +897,15 @@ boolean context_gnuplot ; context_gnuplot := true;
 		draw (gp_the_symbol(n) scaled (gp_scale_pointsize) shifted (x,y)) withcolor gp_color_current;
 	enddef ;
 
+%	TODO: this needs some more testing and synchronization with gnuplot source code first
+%
+%	def gp_image_rgb(expr size, ll, ur) =
+%		draw bitmapimage (xpart size,ypart size,img) xyscaled (ur shifted -ll) shifted ll;
+%	enddef ;
+%	def gp_image_rgb_alpha(expr size, ll, ur) =
+%		draw bitmapimage (xpart size,ypart size,img) withmask mask xyscaled (ur shifted -ll) shifted ll;
+%	enddef ;
+
 	endinput
 
 end.
