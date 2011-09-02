@@ -391,15 +391,20 @@ boolean context_gnuplot ; context_gnuplot := true;
 	%% Scaling factors
 	%%
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	
+
+	% --> fixed
+	% default linewidth in metapost: 0.5bp
+	numeric gp_internal_linewidth; gp_internal_linewidth := 0.5bp;
+
+	% --> set globally by user (usually with TeX code)
 	% scaling factor for points
-	gp_scale_pointsize := 1;
+	numeric gp_scale_pointsize; gp_scale_pointsize := 1;
 	% scaling factor for line widths (for the whole plot)
-	gp_scale_linewidth := 1;
-	% current linewidth
-	gp_linewidth := 1;
-	% base linewidth: 0.5bp
-	gp_internal_linewidth := 0.5bp;
+	numeric gp_scale_linewidth; gp_scale_linewidth := 1;
+
+	% --> calculated based on gnuplot's directives in the middle of plot
+	% the true linewidth; equivalent of gp_set_linewidth(1);
+	numeric gp_linewidth; gp_linewidth := gp_scale_linewidth*gp_internal_linewidth;
 
 	numeric gp_linetype; gp_linetype := -3;
 
@@ -850,11 +855,19 @@ boolean context_gnuplot ; context_gnuplot := true;
 
 	picture gp_point_pt[];
 
+	% context.trm defines CONTEXT_HTIC = 3.5bp, so points have to match that size
+	% all the shapes above are two units big, so we need to scale with 0.5*3.5bp
+	%
+	% TODO: I should introduce a new variable instead of hardcoding the value
+	% TODO: when points are scaled, line width should not scale along
+	% TODO: when line widths are scaled, line widths of points should scale as well
 	for i=0,1,2,3,5,7,9,11,13:
-		gp_point_pt[i] := image(draw gp_point_shape[i] scaled 3pt;); % TODO: fix the scale & linewidth
+		gp_point_pt[i] := image(draw gp_point_shape[i]
+			scaled 1.75bp withpen pencircle scaled gp_linewidth;);
 	endfor;
 	for i=4,6,8,10,12,14:
-		gp_point_pt[i] := image(filldraw gp_point_shape[i] scaled 3pt;); % TODO: fix the scale & linewidth
+		gp_point_pt[i] := image(filldraw gp_point_shape[i]
+			scaled 1.75bp withpen pencircle scaled gp_linewidth;);
 	endfor;
 
 	% we have defined 15 point types so far
