@@ -398,8 +398,8 @@ boolean context_gnuplot ; context_gnuplot := true;
 	gp_scale_linewidth := 1;
 	% current linewidth
 	gp_linewidth := 1;
-	% base linewidth: 0.4bp
-	gp_internal_linewidth := 0.4;
+	% base linewidth: 0.5bp
+	gp_internal_linewidth := 0.5bp;
 
 	numeric gp_linetype; gp_linetype := -3;
 
