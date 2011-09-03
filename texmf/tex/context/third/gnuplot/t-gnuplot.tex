@@ -750,12 +750,16 @@
 	{\GNUPLOTfile-pngcairo.png}{\GNUPLOTfile-pngcairo.png}
 \defineGNUPLOThandle
 	{tikz}{tikz context createstyle
-	            size \@@GNUPLOT@term@tikz@width,\@@GNUPLOT@term@tikz@height\space
-	            charsize \the\GNUPLOThcharsize,\the\GNUPLOTvcharsize
+	       size \@@GNUPLOT@term@tikz@width,\@@GNUPLOT@term@tikz@height\space
+	       charsize \the\GNUPLOThcharsize,\the\GNUPLOTvcharsize\space
+	       fontscale \@@GNUPLOT@term@tikz@fontscale
 	}{tex}{}
 	{\GNUPLOTfile-tikz.tex}{\GNUPLOTfile-tikz.tex}
 \defineGNUPLOThandle
-	{context}{context size \@@GNUPLOT@term@context@width,\@@GNUPLOT@term@context@height\space fontscale \@@GNUPLOT@term@context@fontscale}{tex}{}
+	{context}{context
+	          size \@@GNUPLOT@term@context@width,\@@GNUPLOT@term@context@height\space
+	          fontscale \@@GNUPLOT@term@context@fontscale
+	}{tex}{}
 	{\GNUPLOTfile-ctx.tex}{\GNUPLOTfile-ctx.tex}
 % \doifnotempty{\@@GNUPLOT@term@context@fontscale}{fontscale \@@GNUPLOT@term@context@fontscale}
 
@@ -925,6 +929,7 @@
 	[tikz]
 	[width=5in,        % *5in* | default (todo)  | <dimension>
 	 height=3in,       % *3in* | default (todo) | <dimension>
+	 fontscale=1,      % scaling factor for text labels
 	]
 
 % TODO: better scaling
