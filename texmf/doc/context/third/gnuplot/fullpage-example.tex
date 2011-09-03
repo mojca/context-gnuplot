@@ -1,4 +1,5 @@
-% Written by ConTeXt terminal for GNUPLOT on: Thu Feb 10 09:02:54 2011
+% Written by ConTeXt terminal for GNUPLOT on: Sat Sep  3 14:05:16 2011
+
 % GNUPLOT version 4.5 patchlevel 0
 % See also http://wiki.contextgarden.net/Gnuplot
 %
@@ -14,8 +15,8 @@
     linecap=butt, % *butt* | rounded | squared
     dashed=yes, % *yes* | no
     dashlength=1, % scaling factor for dash lengths
-    linewidth=1, % scaling factor for line widths (1.0 means 0.4bp)
-    %textscale=1, % scaling factor for text labels
+    linewidth=1, % scaling factor for line widths (1.0 means 0.5bp)
+    %fontscale=1, % scaling factor for text labels
     points=metapost] % *metapost* | tex (Should points be drawn with MetaPost or TeX?)
 
 \starttext
@@ -26,8 +27,8 @@ gnuplotversion := "4.5";
 w:=5in; h:=3in;
 % horizontal and vertical scaling factors
 a:=w/120.00; b:=h/72.00;
-% temporary variable for storing the path
-save p; path p;
+% temporary variable for storing the path and images
+save p, img, ima; path p; string img, ima;
 %
 % -------------------------
 % Different initialisations
@@ -124,10 +125,8 @@ gp_draw(p);
 p := (114.17a,68.11b)--(114.17a,66.95b);
 gp_draw(p);
 gp_put_text((114.17a, 3.98b), align(center), \sometxt[gp]{10});
-p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)
-  --(12.61a,68.11b)--cycle;
+p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)--cycle;
 gp_draw(p);
-gp_set_pointsize(1.000);
 gp_set_linetype(0);
 gp_set_color(lt(-2));
 gp_put_text((99.43a, 64.96b), align(right), \sometxt[gp]{sin(x)});
@@ -161,10 +160,8 @@ p := (12.61a,54.40b)--(13.64a,49.00b)--(14.66a,43.16b)--(15.69a,37.11b)
   --(111.09a,38.96b)--(112.12a,32.91b)--(113.14a,27.07b)--(114.17a,21.67b);
 gp_draw(p);
 gp_set_linetype(-2);
-p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)
-  --(12.61a,68.11b)--cycle;
+p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)--cycle;
 gp_draw(p);
-gp_set_pointsize(1.000);
 setbounds currentpicture to unitsquare xyscaled (w,h); % 0 0 1 1
 \stopGNUPLOTpage
 \startGNUPLOTpage % Graphic Nr. 2
@@ -173,8 +170,8 @@ gnuplotversion := "4.5";
 w:=5in; h:=3in;
 % horizontal and vertical scaling factors
 a:=w/120.00; b:=h/72.00;
-% temporary variable for storing the path
-save p; path p;
+% temporary variable for storing the path and images
+save p, img, ima; path p; string img, ima;
 %
 % -------------------------
 % Different initialisations
@@ -251,10 +248,8 @@ gp_draw(p);
 p := (114.17a,68.11b)--(114.17a,66.95b);
 gp_draw(p);
 gp_put_text((114.17a, 3.98b), align(center), \sometxt[gp]{10});
-p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)
-  --(12.61a,68.11b)--cycle;
+p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)--cycle;
 gp_draw(p);
-gp_set_pointsize(1.000);
 gp_set_linetype(0);
 gp_set_color(lt(-2));
 gp_put_text((99.43a, 64.96b), align(right), \sometxt[gp]{cos(atan(x))*sin(x)});
@@ -288,10 +283,8 @@ p := (12.61a,40.75b)--(13.64a,39.89b)--(14.66a,38.92b)--(15.69a,37.87b)
   --(111.09a,38.20b)--(112.12a,37.15b)--(113.14a,36.18b)--(114.17a,35.32b);
 gp_draw(p);
 gp_set_linetype(-2);
-p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)
-  --(12.61a,68.11b)--cycle;
+p := (12.61a,68.11b)--(12.61a,7.96b)--(114.17a,7.96b)--(114.17a,68.11b)--cycle;
 gp_draw(p);
-gp_set_pointsize(1.000);
 setbounds currentpicture to unitsquare xyscaled (w,h); % 0 0 1 1
 \stopGNUPLOTpage
 \stoptext
