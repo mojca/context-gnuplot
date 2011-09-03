@@ -83,7 +83,7 @@
 	% linewidth scale
 	gp_scale_linewidth := \@@GNUPLOT@term@context@linewidth;
 	
-	gp_scale_text := \@@GNUPLOT@term@context@textscale;
+	gp_scale_text := \@@GNUPLOT@term@context@fontscale;
 
 	% linejoin := \gp:term:context:linejoin;
 	% linecap  := \gp:term:context:linecap;
@@ -755,9 +755,9 @@
 	}{tex}{}
 	{\GNUPLOTfile-tikz.tex}{\GNUPLOTfile-tikz.tex}
 \defineGNUPLOThandle
-	{context}{context size \@@GNUPLOT@term@context@width,\@@GNUPLOT@term@context@height\space textscale \@@GNUPLOT@term@context@textscale}{tex}{}
+	{context}{context size \@@GNUPLOT@term@context@width,\@@GNUPLOT@term@context@height\space fontscale \@@GNUPLOT@term@context@fontscale}{tex}{}
 	{\GNUPLOTfile-ctx.tex}{\GNUPLOTfile-ctx.tex}
-% \doifnotempty{\@@GNUPLOT@term@context@textscale}{textscale \@@GNUPLOT@term@context@textscale}
+% \doifnotempty{\@@GNUPLOT@term@context@fontscale}{fontscale \@@GNUPLOT@term@context@fontscale}
 
 \def\defineGNUPLOTterminal
 	{\dodoubleargument\dodefineGNUPLOTterminal}
@@ -918,7 +918,7 @@
 	 dashed=yes,       % *yes* | no
 	 dashlength=1,     % scaling factor for dash lengths
 	 linewidth=1,      % scaling factor for line widths (1.0 means 0.4bp)
-	 textscale=1,      % scaling factor for text labels
+	 fontscale=1,      % scaling factor for text labels
 	 points=metapost]  % *metapost* | tex (Should points be drawn with MetaPost or TeX?)
 
 \setupGNUPLOTterminal
