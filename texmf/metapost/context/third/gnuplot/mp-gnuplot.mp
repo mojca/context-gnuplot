@@ -780,9 +780,7 @@ boolean context_gnuplot ; context_gnuplot := true;
 			% axes should be drawn with only one half of the default linewidth
 			% TODO: do we need this to be configurable?
 			if gp_linetype = -1: scaled .5 fi
-			if gp_use_dashed: dashed gp_dash_linetype(gp_linetype)
-			% TODO: make this definition nicer (combine with the definition above)
-			elseif gp_linetype = -1: dashed gp_dash_linetype(gp_linetype) fi;
+			if gp_use_dashed or (gp_linetype = -1): dashed gp_dash_linetype(gp_linetype) fi;
 	enddef;
 
 	def gp_dot(expr x,y) =
