@@ -10,9 +10,9 @@
 	[gnuplot]
 
 \setuplayout
-	[backspace=1in,
+	[backspace=2cm,
 	 width=middle,
-	 topspace=1in,
+	 topspace=2cm,
 	 heigh=middle,
 	 header=0pt,
 	 headerdistance=0pt]
@@ -22,6 +22,7 @@
 \setuphead
 	[title]
 	[align=middle,
+	 before={\strut\blank[24pt]},
 	 style=\bfc]
 \setuphead
 	[section]
@@ -40,7 +41,7 @@
 
 \definetyping
 	[GP]
-	[escape={[[,]]}]
+	[escape={[[,]]},lines=no]
 \setuptyping
 	[TEX]
 	[stlye=\tfx]
@@ -85,6 +86,8 @@
 
 \centerline{Mojca Miklavec, \date[y=2011,m=9,d=3]}
 
+{\it With special thanks to Hans Hagen, Taco Hoekwater, Aditya Mahajan and others.}
+
 \blank
 
 \placelist[section]
@@ -105,7 +108,7 @@
 
 \subsection{Gnuplot}
 
-At the time of writing gnuplot contains a buggy {\tt tikz} terminal (it doesn't work with \CONTEXT) and no {\tt context} terminal. This may change in future, but at the moment you have to compile gnuplot yourself. The latest version of {\tt context.trm} can be found at
+At the time of writing inclusion of {\tt context} terminal in gnuplot is still pending gnuplot. This may change in future, but even then you might want to compile gnuplot yourself to get a recent version. The latest version of {\tt context.trm} can be found at
 \useURL[github gnuplot][https://github.com/mojca/gnuplot]\from[github gnuplot].
 
 You need to run
@@ -134,9 +137,9 @@ The module also supports some other terminals like {\tt png}, {\tt metapost}, {\
 
 \subsection{{\tt\bf t-gnuplot} module for \CONTEXT}
 
-Under \CONTEXT\ Minimals you can install the gnuplot module and \TIKZ\ with an additional switch when running {\tt f\/irst-setup}, for example:
+Under \CONTEXT\ Minimals you can install the gnuplot module and \TIKZ\ with an additional switch when running {\tt first-setup}, for example:
 \startbackground
-\tt f\/irst-setup.sh -\/-extras=t-gnuplot,t-tikz
+\tt first-setup.sh --modules=gnuplot,tikz
 \stopbackground
 
 If you have installed a {\tt complete} or {\tt context} scheme under \TEXLIVE, gnuplot module and \TIKZ\ might already be installed. Else you can use:
@@ -195,7 +198,7 @@ You should get a {\sc pdf} document with two full-page plots that you can includ
 \page
 \subsection{Calling gnuplot from \TeX}
 
-As you can see you will always get Latin Modern font at 12pt unless you explicitely change it with {\tt header "\textbackslash setupbodyfont[somefontname,10pt]"} or with {\tt font "somefontname,10pt"}. An easier way to make sure that the same font is used and to avoid having to call gnuplot manually is to simply type the gnuplot code inside your \CONTEXT\ document:
+As you can see you will always get Latin Modern font at 12pt unless you explicitly change it with {\tt header "\textbackslash setupbodyfont[somefontname,10pt]"} or with {\tt font "somefontname,10pt"}. An easier way to make sure that the same font is used and to avoid having to call gnuplot manually is to simply type the gnuplot code inside your \CONTEXT\ document:
 
 \startTEX
 \usemodule
@@ -297,13 +300,14 @@ set term context { default }
                  { [[\bf input]] | standalone }
                  { [[\bf noheader]] | header "<header>" }
                  { [[\bf color]] | colour | monochrome }
-                 { mitered | [[\bf rounded]] | beveled }
-                 { butt | [[\bf round]] | squared }
+                 { [[\bf rounded]] | mitered | beveled }
+                 { [[\bf round]] | butt | squared }
                  { [[\bf dashed]] | solid }
                  { dashlength | dl <DL> }
                  { linewidth | lw <LW> }
                  { fontscale <fontscale> }
                  { [[\bf mppoints]] | texpoints }
+                 { [[\bf inlineimages]] | externalimages }
                  { [[\bf defaultfont]] | font {<fontsize>} |
                    font "<fontname>{,<fontsize>}" {fontsize} }
 \stopGP
@@ -384,6 +388,35 @@ splot cos(u)+.5*cos(u)*cos(v),sin(u)+.5*sin(u)*cos(v),.5*sin(v) with pm3d, \
 \stopGNUPLOTscript
 
 \setupGNUPLOT[terminal=pngcairo]
-\placefigure{An example of using png terminal}{\framed{\useGNUPLOTgraphic[bitmap][scale=700]}}
+\placefigure{An example of graphic generated with png terminal}{\hbox to \textwidth{\hss\framed{\useGNUPLOTgraphic[bitmap][scale=700]}\hss}}
+
+\page
+\section{Known bugs}
+
+\subsection{Buggy implementation in \ConTeXt\ module}
+
+\startitemize[packed]
+\item Point sizes of \TeX\ symbols for points have to be fine-tuned for proper size.
+\item Points don't scale properly. Line widths should not be scaled when bigger points are requested. Also, when thicker lines are used, points don't inherit that thickness. The reason is buggy implementation that stores all points as pictures in the beginning instead of drawing each point separately when that is requested.
+\item Patterns fills are a semi-hack. They are composed out of little tiles and drawn next to each other. This doesn't look properly when rendered. This also means that line widths don't scale properly.
+\item MetaPost could be highly optimized. In particular the transparency should be handled more efficiently.
+\stopitemize
+
+\subsection{Support in \ConTeXt\ core}
+
+\startitemize[packed]
+\item Switching to a different font for font labels doesn't work in {\sc mkiv} and uses an ugly hack in {\sc mkii}.
+\item External images don't work in {\sc mkiv} at the moment. Use {\tt images=inline} ({\tt inlineimages} in gnuplot). This is because the only acceptable {\sc mkii} syntax is {\tt externalfigure "name.png"}, while {\sc mkiv} requires {\tt draw externalfigure "name.png"}. This has to be fixed in \ConTeXt\ core.
+\item Transparent inline images are not yet supported.
+\item There might be still some memory leaks in MetaPost. The major ones were fixed.
+\stopitemize
+
+\subsection{Limitations}
+
+\startitemize[packed]
+\item Plots with many graphical elements don't work in {\sc mkii} since \TeX\ runs out of memory.
+\item Inline bitmap images are not (and might never be) supported in {\sc mkii}. If you want to use external bitmap images, use the option {\tt externalimages} in {\tt context} terminal ({\tt images=external} in \ConTeXt).
+\stopitemize
+
 
 \stoptext
