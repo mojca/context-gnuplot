@@ -1,6 +1,6 @@
 %D \module
 %D   [       file=t-gnuplot,
-%D        version=2011.02.10,
+%D        version=2012.01.16,
 %D          title=\CONTEXT\ Extra Modules,
 %D       subtitle=\GNUPLOT\ Inclusion,
 %D         author={Hans Hagen, Taco Hoekwater, Mojca Miklavec, (Aditya Mahajan)},
@@ -102,13 +102,6 @@
 %D    \type+draw \sometxt{...} withcolor red+
 \chardef\TeXtextcolormode\zerocount
 
-%D We have to make sure that runtime MP graphics are enabled,
-%D otherwise sizes of labels created by \type+\sometxt{}+ would be wrong
-%D if user didn't enable that option in \type{cont-usr.tex}.
-%D (Taco says it might be a bug, but let's not worry too much about it.
-%D  If it will be resolved, we may delete this.)
-\runMPgraphicstrue
-
 %D We need a \type{\strut} in front of labels for better vertical centering.
 %D This might still fail for Zapfino and alike where \type{\strut} might be smaller
 %D than the actual font height.
@@ -136,6 +129,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\ifx\directlua\undefined
 %D The following patch has been written by Aditya and seems to work OK,
 %D however it would be more clean to have this functionality in the core.
 %D Redefining low-level macros might be a bit dangerous, esp. since
@@ -146,7 +140,6 @@
 %D TODO: remind Hans to implement it in core ;)
 %D       and remove this patch from the module
 %D
-\ifx\directlua\undefined
 \long\def\redofiltersometxt[#1]%
 {\doifnextcharelse[{\reredofiltersometxt[#1]}{\redodofiltersometxt[#1]}}
 
@@ -159,6 +152,14 @@
   {\increment\txtcounter
    \TeXtext[#1]\txtcounter{\switchtobodyfont[#2]\strut#3}%
    \filtersometxt}
+
+%D In MKII we have to make sure that runtime MP graphics are enabled,
+%D otherwise sizes of labels created by \type+\sometxt{}+ would be wrong
+%D if user didn't enable that option in \type{cont-usr.tex}.
+%D (Taco says it might be a bug, but let's not worry too much about it.
+%D  If it will be resolved, we may delete this.)
+\runMPgraphicstrue
+
 \fi
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
