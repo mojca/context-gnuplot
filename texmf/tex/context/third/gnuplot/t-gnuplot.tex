@@ -1,6 +1,6 @@
 %D \module
 %D   [       file=t-gnuplot,
-%D        version=2012.01.16,
+%D        version=2012.06.07,
 %D          title=\CONTEXT\ Extra Modules,
 %D       subtitle=\GNUPLOT\ Inclusion,
 %D         author={Hans Hagen, Taco Hoekwater, Mojca Miklavec, (Aditya Mahajan)},
@@ -697,7 +697,7 @@
 
 %D We need to preserve line breaks, otherwise metapost runs into troubles for longer input.
 \def\startGNUPLOTpage
-	{\begingroup\obeyMPlines\dostartGNUPLOTpage}
+	{\begingroup\dostartGNUPLOTpage}
 
 \long\def\dostartGNUPLOTpage#1\stopGNUPLOTpage
 	{\endgroup\startMPpage#1\stopMPpage}
