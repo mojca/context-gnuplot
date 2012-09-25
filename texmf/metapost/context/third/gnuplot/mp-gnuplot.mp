@@ -74,11 +74,11 @@ boolean context_gnuplot ; context_gnuplot := true;
 	%
 	% linecap := butt; ???
 	picture gp_dash_lt[];
-	gp_dash_lt[-3] := dashpattern(off 1) scaled (gp_scale_dashlength*gp_dashlength); % TODO: test!!!
-	gp_dash_lt[-2] := dashpattern(on 1) scaled (gp_scale_dashlength*gp_dashlength);
+	gp_dash_lt[-3] := dashpattern(on 0 off 1) scaled (gp_scale_dashlength*gp_dashlength); % TODO: this is wrong anyway; it should generate an XORed line
+	gp_dash_lt[-2] := dashpattern();
 	% for axes
 	gp_dash_lt[-1] := dashpattern(on 2 off 1) scaled (gp_scale_dashlength*gp_dashlength);
-	gp_dash_lt[0]  := dashpattern(on 1) scaled (gp_scale_dashlength*gp_dashlength);
+	gp_dash_lt[0]  := dashpattern();
 	gp_dash_lt[1]  := dashpattern(on 4 off 2) scaled (gp_scale_dashlength*gp_dashlength);
 	gp_dash_lt[2]  := dashpattern(on 2 off 3) scaled (gp_scale_dashlength*gp_dashlength);
 	gp_dash_lt[3]  := dashpattern(on 1 off 1.5) scaled (gp_scale_dashlength*gp_dashlength);
