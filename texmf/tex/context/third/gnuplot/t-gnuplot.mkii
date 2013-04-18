@@ -1,6 +1,6 @@
 %D \module
 %D   [       file=t-gnuplot,
-%D        version=2012.09.25,
+%D        version=2013.04.18,
 %D          title=\CONTEXT\ Extra Modules,
 %D       subtitle=\GNUPLOT\ Inclusion,
 %D         author={Hans Hagen, Taco Hoekwater, Mojca Miklavec, (Aditya Mahajan)},
@@ -129,7 +129,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\ifx\directlua\undefined
 %D The following patch has been written by Aditya and seems to work OK,
 %D however it would be more clean to have this functionality in the core.
 %D Redefining low-level macros might be a bit dangerous, esp. since
@@ -160,17 +159,7 @@
 %D  If it will be resolved, we may delete this.)
 \runMPgraphicstrue
 
-\fi
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%D This was needed for the old method of
-%D \type{put_text("some text")} using textext: not used/supported any more
-%\ifx\directlua\undefined
-%	\forceMPTEXcheck{put_text}
-%\fi
-%\runMPTEXgraphicstrue
 
 \newcounter\GNUPLOTnumber
 \newdimen\GNUPLOThcharsize
@@ -576,7 +565,6 @@
    %
    % XXX: no idea why this is needed, but otherwise it complains that @@GNUPLOTpointset is undefined
    \edef\currentGNUPLOTpointset{\@@GNUPLOTpointset}%
-   \ifx\directlua\undefined
    \startTeXtexts
     \doloop{\doifelseconversionnumber{\@@GNUPLOTpointset}{\recurselevel}%
        % +500 is a hack (hopefully the plot doesn't contain more than 500 labels)
@@ -585,7 +573,6 @@
        {\TeXtext{\numexpr\recurselevel+500\relax}{{\convertnumber{\currentGNUPLOTpointset}{\recurselevel}}}}%
        {\exitloop}}%
    \stopTeXtexts
-   \fi
    % \gp:num:pointswithtex is passed to metapost, so that it knows
    % how many points are defined and chooses the proper point
    % form a set of the defined ones
