@@ -3,7 +3,7 @@
 \enableregime
 	[utf-8]
 \setupinteraction
-	[state=start]
+	[state=start,color=blue]
 
 
 \usemodule
@@ -46,10 +46,9 @@
 	[TEX]
 	[stlye=\tfx]
 
-\beginNEWTEX\usetypescript[lucida]    \endNEWTEX
-\beginOLDTEX\usetypescript[lucida][ec]\endOLDTEX
+% \usetypescript[lucida][ec] \setupbodyfont[lucida]
 \setupbodyfont
-	[lucida]
+	[lucidanova]
 
 \definecolor
 	[maincolor]
@@ -66,6 +65,7 @@
 \logo [TEXLIVE] {\TeX\ Live}
 \logo [MIKTEX] {MiK\TeX}
 \logo [TIKZ] {Tik{\it Z}}
+\logo [MKII] {{\sc mkii}}
 \logo [CONTEXTMKII] {\ConTeXt\ \MKII}
 
 \defineframedtext
@@ -84,9 +84,9 @@
 
 \title{Using \color[maincolor]{\tt\bf context} and \color[maincolor]{\tt\bf tikz} terminals for gnuplot in \ConTeXt}
 
-\centerline{Mojca Miklavec, \date[y=2011,m=9,d=3]}
+\centerline{Mojca Miklavec, \date[y=2013,m=4,d=19][year,--,mm,--,day]}
 
-{\it With special thanks to Hans Hagen, Taco Hoekwater, Aditya Mahajan and others.}
+{\it With special thanks to Hans Hagen, Taco Hoekwater, Aditya Mahajan, Marco Patzer and others.}
 
 \blank
 
@@ -97,10 +97,10 @@
 \section{Requirements}
 
 \startitemize[n,packed]
-\item Any working \ConTeXt\ installation (\ConTeXt\ Minimals, \TEXLIVE\ 2011, \MIKTEX\ 2.9 or newer -- if it starts supporting \ConTeXt\ again).
-\item The {\tt gnuplot} binary (or {\tt gnuplot.exe} under Windows) has to be in {\tt PATH} and needs to have support for {\tt context} and/or {\tt tikz} terminal built in.
-\item The latest version of gnuplot module for ConTeXt.
-\item For running \GNUPLOT\ on the fly or when using \CONTEXTMKII, you need to have {\tt write18} enabled. Usually this can be set with {\tt shell_escape = t} in {\tt texmf.cnf}.
+\item Any \ConTeXt\ installation (\ConTeXt\ Distribution, \TEXLIVE\ 2011 or later, \dots).
+\item Gnuplot 4.6.0 or later with {\tt context} and/or {\tt tikz} terminal built in. The {\tt gnuplot} binary (or {\tt gnuplot.exe} under Windows) has to be in {\tt PATH}.
+\item Gnuplot module for ConTeXt.
+\item For running \GNUPLOT\ on the fly or when using \CONTEXTMKII, you need to have {\tt write18} enabled. Usually this can be set with {\tt shell\_escape = t} in {\tt texmf.cnf}.
 \stopitemize
 
 
@@ -108,20 +108,17 @@
 
 \subsection{Gnuplot}
 
-At the time of writing inclusion of {\tt context} terminal in gnuplot is still pending gnuplot. This may change in future, but even then you might want to compile gnuplot yourself to get a recent version. The latest version of {\tt context.trm} can be found at
-\useURL[github gnuplot][https://github.com/mojca/gnuplot]\from[github gnuplot].
+As long as you have gnuplot $\geq 4.6.0$ installed, you should have the {\tt context} terminal built in. If not, you might want to compile gnuplot from CVS sources:
 
-You need to run
 \starttyping
-git clone git://github.com/mojca/gnuplot.git
 cd gnuplot
 ./prepare
-./configure
+./configure [--prefix=$PWD/install]
 make
 make install
 \stoptyping
 
-You can also provide something like \type{--prefix=$PWD/install} to install gnuplot locally. Just make sure that you add the resulting binary to {\tt PATH}.
+The option \type{--prefix=$PWD/install} (but you can choose anything) -- if chosen -- will install gnuplot locally even if you lack root permissions. Just make sure that you add the resulting binary to {\tt PATH}.
 
 Once you have the gnuplot binary running, you can check the list of supported terminals by typing
 \startlines
@@ -133,13 +130,13 @@ into \GNUPLOT\ shell. Make sure that it lists:
        tikz  Lua PGF/TikZ terminal for TeX and friends
 \stoptyping
 
-The module also supports some other terminals like {\tt png}, {\tt metapost}, {\tt postscript} and {\tt pdf}, so it is usable even if you didn't compile \GNUPLOT\ yourself, but their integration with \CONTEXT\ is very limited.
+The module also supports some other terminals like {\tt png}, {\tt metapost}, {\tt postscript} and {\tt pdf}, but their integration with \CONTEXT\ is limited.
 
 \subsection{{\tt\bf t-gnuplot} module for \CONTEXT}
 
-Under \CONTEXT\ Minimals you can install the gnuplot module and \TIKZ\ with an additional switch when running {\tt first-setup}, for example:
+Under \CONTEXT\ Distribution you can install the gnuplot module and \TIKZ\ with an additional switch when running {\tt first-setup}, for example:
 \startbackground
-\tt first-setup.sh --modules=gnuplot,tikz
+\tt ./first-setup.sh --modules=gnuplot,tikz
 \stopbackground
 
 If you have installed a {\tt complete} or {\tt context} scheme under \TEXLIVE, gnuplot module and \TIKZ\ might already be installed. Else you can use:
@@ -148,7 +145,7 @@ tlmgr install context-gnuplot\\
 tlmgr install pgf
 \stopbackground
 
-Under \MIKTEX\ the module is installed automatically when it is first used.
+Under \MIKTEX\ the module is installed automatically when it is first used (but at the moment of writing \MIKTEX\ doesn't support \ConTeXt).
 
 \page
 \section{Simple examples}
@@ -295,9 +292,9 @@ plus any optional parameters.
 
 \startGP
 set term context { default }
-                 { defaultsize | size <scale> |
-                   size <xsize> {in|cm}, <ysize> {in|cm} }
+                 { defaultsize | size <xsize> {in|cm}, <ysize> {in|cm} }
                  { [[\bf input]] | standalone }
+                 { [[\bf timestamp]] | notimestamp }
                  { [[\bf noheader]] | header "<header>" }
                  { [[\bf color]] | colour | monochrome }
                  { [[\bf rounded]] | mitered | beveled }
@@ -338,7 +335,7 @@ set term tikz { latex | tex | [[\my{context}]] }
               { tikzplot <ltn>,... }
               { notikzarrows | tikzarrows }
               { rgbimages | cmykimages }
-              { noexternalimages|externalimages }
+              { noexternalimages | externalimages }
               { bitmap | nobitmap }
               { providevars <var name>,... }
               { [[\my{createstyle}]] }
