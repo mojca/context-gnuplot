@@ -63,7 +63,7 @@
 %D if possible, they should be specific to \type{\startGNUPLOTgraphic},
 %D so unvisible to \type{MPcode}
 %D (probably something like \type+\appendtoks ... to\everyGNUPLOTgraphic+)
-\startMPextensions
+\startMPinitializations
 	% load metapost macros (only once)
 	input mp-gnuplot.mp ;
 	% number of points defined with \setupGNUPLOTterminal[pointset=...]
@@ -96,7 +96,7 @@
 	
 	gp_points_with := gp_points_with_\@@GNUPLOT@term@context@points;
 	
-\stopMPextensions
+\stopMPinitializations
 
 %D (hopefully) temporary solution for handling the color in expressions like
 %D    \type+draw \sometxt{...} withcolor red+
