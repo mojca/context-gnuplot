@@ -926,28 +926,13 @@
   \definefontsynonym [SerifCaps]        [Helvetica]
 \stoptypescript
 
-\beginOLDTEX
-
-  \starttypescript [gnuplot] [texnansi,ec]
-    \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
-    \definetypeface [Helvetica] [ss] [sans]   [helvetica] [default] [encoding=\typescripttwo]
-    \definetypeface [Arial]     [rm] [serif]  [helvetica] [default] [encoding=\typescripttwo]
-    \definetypeface [Arial]     [ss] [sans]   [helvetica] [default] [encoding=\typescripttwo]
-  \stoptypescript
-  \usetypescript[gnuplot][ec]
-
-\endOLDTEX
-\beginNEWTEX
-
-  \starttypescript [gnuplot]
-    \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default]
-    \definetypeface [Helvetica] [ss] [sans]   [helvetica] [default]
-    \definetypeface [Arial]     [rm] [serif]  [helvetica] [default]
-    \definetypeface [Arial]     [ss] [sans]   [helvetica] [default]
-  \stoptypescript
-  \usetypescript[gnuplot]
-
-\endNEWTEX
+\starttypescript [gnuplot]
+  \definetypeface [Helvetica] [rm] [serif]  [helvetica] [default]
+  \definetypeface [Helvetica] [ss] [sans]   [helvetica] [default]
+  \definetypeface [Arial]     [rm] [serif]  [helvetica] [default]
+  \definetypeface [Arial]     [ss] [sans]   [helvetica] [default]
+\stoptypescript
+\usetypescript[gnuplot]
 
 \stopmodule
 
